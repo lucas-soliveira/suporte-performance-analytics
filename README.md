@@ -15,6 +15,8 @@ O objetivo foi responder a três perguntas de negócio, uma por página do dashb
 | **Análise Operacional** | Onde estão os problemas? |
 
 > ⚠️ **Todos os dados são fictícios**, gerados por scripts em Python. Nenhuma empresa, pessoa, e-mail ou chamado é real.
+>
+> 🎨 **Sobre a marca:** o dashboard usa apenas o **branding da Claro** (logo e cores) como referência visual de layout. Nenhum dado, número ou informação da Claro foi utilizado, e o projeto não tem vínculo com a empresa.
 
 ## 🎯 Principais Resultados
 
