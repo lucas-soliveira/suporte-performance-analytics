@@ -1,0 +1,20 @@
+/// Linhas da matriz Carga x MTTR (Página 2 nativa)
+table 'Quadrante MTTR'
+	lineageTag: eeccc83d-d0a0-44ee-bba8-c1b5f11356b6
+
+	column MTTR
+		lineageTag: a58a4383-487e-43d2-a8b8-c092b48e184a
+		isNameInferred
+		sourceColumn: [MTTR]
+		sortByColumn: Ordem
+
+	column Ordem
+		isHidden
+		lineageTag: c5661a5c-ccce-47de-9ec4-c699c2033e58
+		isNameInferred
+		sourceColumn: [Ordem]
+
+	partition 'Quadrante MTTR' = calculated
+		mode: import
+		source = DATATABLE ( "MTTR", STRING, "Ordem", INTEGER, { { "MTTR menor (resolvem rápido)", 1 }, { "MTTR maior (demoram mais)", 2 } } )
+

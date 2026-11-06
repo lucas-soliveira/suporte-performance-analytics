@@ -1,0 +1,34 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: pt-BR
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["_Medidas","dw dim_analista","dw dim_calendario","dw dim_cliente","dw fato_chamados","dw dim_supervisor","dw dim_pais","dw supervisor_pais"]
+
+annotation PBI_ProTooling = ["DaxQueryView_Desktop","DevMode","MCP-PBIModeling"]
+
+ref table _Medidas
+ref table 'dw dim_analista'
+ref table 'dw dim_calendario'
+ref table 'dw dim_cliente'
+ref table 'dw fato_chamados'
+ref table 'dw dim_supervisor'
+ref table 'dw dim_pais'
+ref table 'dw supervisor_pais'
+ref table 'Filtro Rapido de Data'
+ref table 'Faixa Idade'
+ref table 'Quadrante Carga'
+ref table 'Quadrante MTTR'
+ref table 'Ordem Prioridade'
+
+ref role RLS_Supervisor
+
+ref cultureInfo pt-BR
+

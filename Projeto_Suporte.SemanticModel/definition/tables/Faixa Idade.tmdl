@@ -1,0 +1,32 @@
+/// Faixas de idade do backlog (Página 3 nativa)
+table 'Faixa Idade'
+	lineageTag: 456125d9-fc7e-4a61-a7cc-72dfecaeffa8
+
+	column Faixa
+		lineageTag: 2fffd5f6-6cfa-4ea1-b58b-02db2f540e12
+		isNameInferred
+		sourceColumn: [Faixa]
+		sortByColumn: Ordem
+
+	column Ordem
+		isHidden
+		lineageTag: 61682b3d-be3f-4d39-bcf8-db22e9ab4f34
+		isNameInferred
+		sourceColumn: [Ordem]
+
+	column Min
+		isHidden
+		lineageTag: 6fdef86b-01dc-43cc-9778-29eef38f2a14
+		isNameInferred
+		sourceColumn: [Min]
+
+	column Max
+		isHidden
+		lineageTag: aa695e85-90e8-46f5-835a-51646199a5bf
+		isNameInferred
+		sourceColumn: [Max]
+
+	partition 'Faixa Idade' = calculated
+		mode: import
+		source = DATATABLE ( "Faixa", STRING, "Ordem", INTEGER, "Min", INTEGER, "Max", INTEGER, { { "Até 7 dias", 1, 0, 7 }, { "8 a 30 dias", 2, 8, 30 }, { "31 a 90 dias", 3, 31, 90 }, { "Mais de 90 dias", 4, 91, 3650 } } )
+

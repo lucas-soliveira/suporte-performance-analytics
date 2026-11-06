@@ -1,0 +1,150 @@
+table 'dw dim_calendario'
+	lineageTag: 43ac6217-86c0-463f-ab73-ca8df7d42206
+
+	column id_data
+		dataType: int64
+		isHidden
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: e88129c7-d50a-4bea-bf78-fca40d1b58f6
+		summarizeBy: none
+		sourceColumn: id_data
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column data
+		dataType: dateTime
+		isNullable: false
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: ebaf4b8e-bb35-4bed-a543-cf247860dcf7
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Ano
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 023fb4b8-fcd3-44b5-836c-f80195208210
+		summarizeBy: none
+		sourceColumn: Ano
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: c97f465a-002a-4c50-a8f3-542282189882
+		summarizeBy: none
+		sourceColumn: mes
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_mes
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: 8ba2e1f1-0d14-4e71-949c-0ad675ee39ff
+		summarizeBy: none
+		sourceColumn: nome_mes
+		sortByColumn: mes
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes_ano
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(7)
+		lineageTag: 6ebaf4df-87b2-4b8b-9266-31c4a5b0cfac
+		summarizeBy: none
+		sourceColumn: mes_ano
+		sortByColumn: 'Ano Mes Num'
+
+		annotation SummarizationSetBy = Automatic
+
+	column trimestre
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 26987c65-9ceb-4ed5-8fc1-d6b07188cb00
+		summarizeBy: none
+		sourceColumn: trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_trimestre
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(20)
+		lineageTag: 01c458b1-2d3b-4f36-b814-27078b1a7359
+		summarizeBy: none
+		sourceColumn: nome_trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column dia_semana
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 44600510-d007-404c-bc50-493952da7da2
+		summarizeBy: none
+		sourceColumn: dia_semana
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_dia_semana
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: 7384b035-bdf4-43e2-b9ea-c0360fab5e33
+		summarizeBy: none
+		sourceColumn: nome_dia_semana
+		sortByColumn: dia_semana
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column fim_de_semana
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: d45ec429-c6d8-47db-915c-252e58ffb76c
+		summarizeBy: none
+		sourceColumn: fim_de_semana
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Ano e mês em número (ex.: 202501). Usada só para ordenar mes_ano no eixo.
+	column 'Ano Mes Num' = 'dw dim_calendario'[Ano] * 100 + 'dw dim_calendario'[mes]
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a72824ea-4517-49cc-b5eb-a8708a37c749
+		summarizeBy: none
+
+	partition 'dw dim_calendario' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("pc-lucas\sqldev", "db_suporte_bi"),
+				    dw_dim_calendario = Fonte{[Schema="dw",Item="dim_calendario"]}[Data],
+				    #"Colunas Renomeadas" = Table.RenameColumns(dw_dim_calendario,{{"ano", "Ano"}})
+				in
+				    #"Colunas Renomeadas"
+

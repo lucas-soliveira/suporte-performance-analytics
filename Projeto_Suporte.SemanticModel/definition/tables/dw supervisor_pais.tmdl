@@ -1,0 +1,38 @@
+table 'dw supervisor_pais'
+	lineageTag: 5600f8a0-72c2-42b8-9dfd-2961dc678f40
+
+	column id_supervisor
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 41032e76-1d59-42e4-abb8-25b4cd3e2ea2
+		summarizeBy: none
+		sourceColumn: id_supervisor
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pais
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 543ddbc0-1c34-4204-b71b-c7ac63fb909d
+		summarizeBy: none
+		sourceColumn: id_pais
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dw supervisor_pais' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("PC-LUCAS\SQLDEV", "db_suporte_bi"),
+				    dw_supervisor_pais = Fonte{[Schema="dw",Item="supervisor_pais"]}[Data]
+				in
+				    dw_supervisor_pais
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,9 @@
+/// RLS dinamico: cada supervisor ve apenas os paises ligados ao seu e-mail em supervisor_pais
+role RLS_Supervisor
+	modelPermission: read
+
+	tablePermission 'dw dim_supervisor' = [email] = USERPRINCIPALNAME()
+		metadataPermission: read
+
+	annotation PBI_Id = f4ce77372a8841a0b3a4237bc74b1ad4
+

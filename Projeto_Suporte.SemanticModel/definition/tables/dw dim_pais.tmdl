@@ -1,0 +1,47 @@
+table 'dw dim_pais'
+	lineageTag: 845654ac-d8a2-447e-8bfb-48119f645362
+
+	column id_pais
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7018a114-4015-474a-a972-179096eb6770
+		summarizeBy: none
+		sourceColumn: id_pais
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_pais
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: 1ee7a221-978c-4a45-b8ae-12b62c8b5a11
+		summarizeBy: none
+		sourceColumn: nome_pais
+
+		annotation SummarizationSetBy = Automatic
+
+	column codigo_iso
+		dataType: string
+		isNullable: false
+		sourceProviderType: char
+		lineageTag: 58fab6ca-6773-49fb-a25b-c77db15f49ab
+		summarizeBy: none
+		sourceColumn: codigo_iso
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dw dim_pais' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("PC-LUCAS\SQLDEV", "db_suporte_bi"),
+				    dw_dim_pais = Fonte{[Schema="dw",Item="dim_pais"]}[Data]
+				in
+				    dw_dim_pais
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

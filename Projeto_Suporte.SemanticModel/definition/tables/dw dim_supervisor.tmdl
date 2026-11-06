@@ -1,0 +1,68 @@
+table 'dw dim_supervisor'
+	lineageTag: 36d2c643-b9f3-4d4e-a8f9-13322b7af85e
+
+	column id_supervisor
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: a7b9129e-9dec-47bc-95dc-64e155937206
+		summarizeBy: none
+		sourceColumn: id_supervisor
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(100)
+		lineageTag: 8065d2c9-1681-438d-9876-48ae38f77f56
+		summarizeBy: none
+		sourceColumn: nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column email
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(150)
+		lineageTag: 5b1cac8f-117e-408e-850c-37fbca4113fc
+		summarizeBy: none
+		sourceColumn: email
+
+		annotation SummarizationSetBy = Automatic
+
+	column ativo
+		dataType: boolean
+		isNullable: false
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 6d1c1e4c-55a7-4065-a4ce-3b0ea6ef5c8a
+		summarizeBy: none
+		sourceColumn: ativo
+
+		annotation SummarizationSetBy = Automatic
+
+	column perfil
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(20)
+		lineageTag: b48f9f7a-c612-49fb-b972-31b7393df933
+		summarizeBy: none
+		sourceColumn: perfil
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dw dim_supervisor' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("PC-LUCAS\SQLDEV", "db_suporte_bi"),
+				    dw_dim_supervisor = Fonte{[Schema="dw",Item="dim_supervisor"]}[Data]
+				in
+				    dw_dim_supervisor
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

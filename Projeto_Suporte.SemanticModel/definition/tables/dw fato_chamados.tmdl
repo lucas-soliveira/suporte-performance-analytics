@@ -1,0 +1,166 @@
+table 'dw fato_chamados'
+	lineageTag: 71ecd3a9-5249-4b49-979a-95ca9b042d17
+
+	column id_ticket
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: a5e72e57-e293-472f-bcb4-8f13279a84bc
+		summarizeBy: none
+		sourceColumn: id_ticket
+
+		annotation SummarizationSetBy = User
+
+	column id_analista
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 4676ebee-bc5b-4fa5-9860-e39b713d7c89
+		summarizeBy: none
+		sourceColumn: id_analista
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_cliente
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: eeae5446-86e1-44b1-8bef-5b1f5816d016
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_abertura
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime
+		lineageTag: b9ccdef6-01c1-4940-8503-b95e0510b281
+		summarizeBy: none
+		sourceColumn: data_abertura
+
+		annotation SummarizationSetBy = Automatic
+
+	column data_fechamento
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime
+		lineageTag: f3c138c0-3af5-44b4-9954-fb32b5f2e578
+		summarizeBy: none
+		sourceColumn: data_fechamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column categoria
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(100)
+		lineageTag: 96888b37-f869-4aa7-a1a4-ec86219a218f
+		summarizeBy: none
+		sourceColumn: categoria
+
+		annotation SummarizationSetBy = Automatic
+
+	column prioridade
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: 24349785-94dc-4c7d-b8df-edf921adba83
+		summarizeBy: none
+		sourceColumn: prioridade
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: 19c8e75a-bd95-44e8-9bfc-1351b7fc8a73
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column tempo_resposta
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 50c1aa45-0f8d-4ab0-870f-321f6c99ffe4
+		summarizeBy: sum
+		sourceColumn: tempo_resposta
+
+		annotation SummarizationSetBy = Automatic
+
+	column tempo_resolucao
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ce7011fb-61e3-4bb2-a731-e54ca85b4bee
+		summarizeBy: sum
+		sourceColumn: tempo_resolucao
+
+		annotation SummarizationSetBy = Automatic
+
+	column sla_resposta_ok
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 1ce9d634-9c5e-4ad9-9067-ff8748d5875b
+		summarizeBy: sum
+		sourceColumn: sla_resposta_ok
+
+		annotation SummarizationSetBy = Automatic
+
+	column sla_resolucao_ok
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 591b4d8b-3449-4605-a6fe-b322c15df73f
+		summarizeBy: sum
+		sourceColumn: sla_resolucao_ok
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_data_abertura
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: d739dadc-f469-461b-b924-bca223d89a48
+		summarizeBy: none
+		sourceColumn: id_data_abertura
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_data_fechamento
+		dataType: int64
+		isHidden
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: baaab0b1-73f8-4065-8671-4cba59c29f9f
+		summarizeBy: sum
+		sourceColumn: id_data_fechamento
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dw fato_chamados' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("pc-lucas\sqldev", "db_suporte_bi"),
+				    dw_fato_chamados = Fonte{[Schema="dw",Item="fato_chamados"]}[Data],
+				    #"Colunas Removidas" = Table.RemoveColumns(dw_fato_chamados,{"dw.dim_analista", "dw.dim_cliente"})
+				in
+				    #"Colunas Removidas"
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

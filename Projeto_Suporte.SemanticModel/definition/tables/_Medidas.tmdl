@@ -1,0 +1,1686 @@
+table _Medidas
+	lineageTag: ede66f83-0dd6-41a5-a562-a530e9a55ee9
+
+	measure 'Total Chamados' = COUNTROWS('dw fato_chamados')
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: 108d3ae9-6853-4ab7-9176-d5600ff7f89e
+
+	measure MTTR = AVERAGE('dw fato_chamados'[tempo_resolucao])
+		formatString: 0.0" h"
+		displayFolder: 3 Tempo
+		lineageTag: 70a3a405-70e1-4f65-8aa4-7ea615c614b5
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure '% SLA Resolucao' =
+			DIVIDE(
+			    CALCULATE([Total Chamados], 'dw fato_chamados'[sla_resolucao_ok] = 1),
+			    CALCULATE([Total Chamados], NOT(ISBLANK('dw fato_chamados'[sla_resolucao_ok])))
+			)
+		formatString: 0.0%
+		displayFolder: 2 SLA
+		lineageTag: 5cc5bd42-bd6d-4e74-9e02-6a3eb027a01f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Fechados pela data de fechamento. Usar só no gráfico de evolução no tempo.
+	measure 'Fechados no Período' =
+			
+			CALCULATE(
+			    [Total Chamados],
+			    USERELATIONSHIP('dw fato_chamados'[id_data_fechamento], 'dw dim_calendario'[id_data]),
+			    NOT(ISBLANK('dw fato_chamados'[data_fechamento]))
+			)
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: 181c5cd7-21dc-4bb1-bdf4-22662c19a028
+
+	/// Duplicada do Backlog (mesmo valor, lógica por data). Oculta; excluir depois de confirmar que nenhum visual usa.
+	measure 'Chamados em Aberto' = ```
+			
+			CALCULATE(
+			    [Total Chamados], 
+			    ISBLANK('dw fato_chamados'[data_fechamento])
+			)
+			```
+		formatString: 0
+		isHidden
+		displayFolder: 5 Operacional
+		lineageTag: f3e55c01-3ee7-41b5-811f-8ae9a86fb06b
+
+	measure 'Carga Média por Analista' =
+			
+			DIVIDE([Total Chamados], DISTINCTCOUNT('dw dim_analista'[id_analista]))
+		formatString: #,0
+		displayFolder: 4 Equipe
+		lineageTag: 69ac1e93-c2f3-4175-a0fc-3d1a134638ae
+
+	measure 'MTTR Equipe' =
+			
+			CALCULATE([MTTR], REMOVEFILTERS('dw dim_analista'))
+		formatString: 0.0" h"
+		displayFolder: 3 Tempo
+		lineageTag: 4c7a3d58-95ad-40e6-99d4-28057840c5fb
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure Backlog =
+			
+			CALCULATE([Total Chamados], 'dw fato_chamados'[status] <> "FECHADO")
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: c95d9707-1871-4376-811d-e8a45d8d7d1c
+
+	measure 'Chamados Críticos' =
+			
+			CALCULATE([Total Chamados], 'dw fato_chamados'[prioridade] = "CRÍTICA")
+		formatString: #,0
+		displayFolder: 5 Operacional
+		lineageTag: 3bdfc31d-7a2e-4de2-9f58-bf1932e802f9
+
+	measure 'Diferença MTTR vs Equipe' = [MTTR] - [MTTR Equipe]
+		formatString: +0.0" h";-0.0" h";0.0" h"
+		displayFolder: 3 Tempo
+		lineageTag: 23b0b98b-87a7-422b-ae45-0503615e1d7e
+
+	measure 'Média de Chamados por Dia' =
+			
+			AVERAGEX(VALUES('dw dim_calendario'[data]), [Total Chamados])
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: 93de86b8-2cc0-44a2-9cd4-5b85961dcc0f
+
+	measure '% SLA Resposta' =
+			
+			DIVIDE(
+			    CALCULATE([Total Chamados], 'dw fato_chamados'[sla_resposta_ok] = 1),
+			    [Total Chamados]
+			)
+		formatString: 0.0%
+		displayFolder: 2 SLA
+		lineageTag: d6753652-6af0-4640-b0f3-afbdbaa42a6b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	/// Chamados com status FECHADO, entre os chamados abertos no período selecionado. Total = Fechados + Backlog.
+	measure Fechados = CALCULATE([Total Chamados], 'dw fato_chamados'[status] = "FECHADO")
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: 00f8a71a-8773-47ba-9a21-2fa74e89bd07
+
+	/// Fechados dividido pelo Total de Chamados.
+	measure '% Fechados' = DIVIDE([Fechados], [Total Chamados])
+		formatString: 0.0%
+		displayFolder: 1 Volume
+		lineageTag: 0cbaf50d-ac07-4db3-8ac7-48d10f34b897
+
+	/// Backlog dividido pelo Total de Chamados.
+	measure '% Backlog' = DIVIDE([Backlog], [Total Chamados])
+		formatString: 0.0%
+		displayFolder: 1 Volume
+		lineageTag: de84aea5-d4b9-4f38-b748-c90f2188ac11
+
+	/// Chamados por analista considerando toda a equipe visível ao usuário (a RLS continua valendo).
+	measure 'Carga Média da Equipe' =
+			DIVIDE(
+			    CALCULATE([Total Chamados], REMOVEFILTERS('dw dim_analista')),
+			    CALCULATE(DISTINCTCOUNT('dw dim_analista'[id_analista]), REMOVEFILTERS('dw dim_analista'))
+			)
+		formatString: #,0
+		displayFolder: 4 Equipe
+		lineageTag: 6b9365e5-330d-4445-b492-787606c818b6
+
+	/// Quanto a carga do analista (ou do grupo) está acima ou abaixo da média da equipe.
+	measure 'Carga vs Equipe (%)' = DIVIDE([Carga Média por Analista], [Carga Média da Equipe]) - 1
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 4 Equipe
+		lineageTag: f990dee9-3440-4152-8e93-7cbd6683d751
+
+	/// Chamados de prioridade CRÍTICA que ainda não foram fechados.
+	measure 'Backlog Crítico' = CALCULATE([Backlog], 'dw fato_chamados'[prioridade] = "CRÍTICA")
+		formatString: #,0
+		displayFolder: 5 Operacional
+		lineageTag: e76dcbe6-6e37-4965-8b9d-43548d0e7f89
+
+	/// Chamados fechados que estouraram a meta de resolução.
+	measure 'Violações SLA Resolução' =
+			CALCULATE(
+			    [Total Chamados],
+			    'dw fato_chamados'[sla_resolucao_ok] = 0,
+			    NOT(ISBLANK('dw fato_chamados'[sla_resolucao_ok]))
+			)
+		formatString: #,0
+		displayFolder: 2 SLA
+		lineageTag: ec4e17bc-1bcb-42b7-a46a-283a7f773994
+
+	/// Chamados que estouraram a meta de primeira resposta.
+	measure 'Violações SLA Resposta' = CALCULATE([Total Chamados], 'dw fato_chamados'[sla_resposta_ok] = 0)
+		formatString: #,0
+		displayFolder: 2 SLA
+		lineageTag: 1c7b9c26-4910-4864-924e-8f1a33b1361b
+
+	/// Período coberto pelos chamados no contexto de filtro (data de abertura). Ex.: 01/01 a 29/06/2024. Texto só para exibição.
+	measure 'Período Avaliado' =
+			VAR _ini = MIN('dw fato_chamados'[data_abertura])
+			VAR _fim = MAX('dw fato_chamados'[data_abertura])
+			VAR _mesmoAno = YEAR(_ini) = YEAR(_fim)
+			VAR _txtIni =
+			    FORMAT(DAY(_ini), "00") & "/" & FORMAT(MONTH(_ini), "00")
+			        & IF(_mesmoAno, "", "/" & YEAR(_ini))
+			VAR _txtFim =
+			    FORMAT(DAY(_fim), "00") & "/" & FORMAT(MONTH(_fim), "00") & "/" & YEAR(_fim)
+			RETURN
+			    IF(ISBLANK(_ini), BLANK(), _txtIni & " a " & _txtFim)
+		displayFolder: 1 Volume
+		lineageTag: ff06d44a-7b37-4a48-8791-2a0beae9cf49
+
+	/// Dias corridos entre a primeira e a última abertura no contexto de filtro, inclusive. Usada no tooltip do card executivo (Deneb).
+	measure 'Dias no Período' =
+			VAR _ini = MIN('dw fato_chamados'[data_abertura])
+			VAR _fim = MAX('dw fato_chamados'[data_abertura])
+			RETURN
+			    IF(NOT ISBLANK(_ini), DATEDIFF(_ini, _fim, DAY) + 1)
+		formatString: #,0
+		displayFolder: 1 Volume
+		lineageTag: 2d612098-9f2e-47d0-85bd-bcb3da742bdf
+
+	/// Chave numérica aaaamm do mês no contexto de filtro (ex.: 202406). Usada só para ordenar a série mensal no card executivo (Deneb), evitando coluna numérica que o Power BI somaria.
+	measure 'Chave Mês' =
+			IF(
+			    NOT ISBLANK([Total Chamados]),
+			    MAX('dw dim_calendario'[ano]) * 100 + MAX('dw dim_calendario'[mes])
+			)
+		formatString: 0
+		displayFolder: 6 Auxiliares de Visuais
+		lineageTag: be04e8b3-8838-4456-bbd3-0ac070cd0d66
+
+	/// HTML do card KPI Total de Chamados (tema escuro azul). Aditiva.
+	measure 'HTML KPI Total Chamados' =
+			VAR _valor = [Total Chamados]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( [Período Avaliado] ), "Sem dados no período", [Período Avaliado] )
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "Total de Chamados"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 054c9c4e-4b0d-4ab0-b130-9db155692aee
+
+	/// HTML do card KPI Chamados Fechados (tema escuro azul). Aditiva.
+	measure 'HTML KPI Fechados' =
+			VAR _valor = [Fechados]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( [% Fechados] ), "Sem dados no período", FORMAT ( [% Fechados], "0.0%", "pt-BR" ) & " do total" )
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "Chamados Fechados"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 974856dc-f866-4010-a426-67d5d040c33a
+
+	/// HTML do card KPI Backlog (tema escuro azul). Aditiva.
+	measure 'HTML KPI Backlog' =
+			VAR _valor = [Backlog]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( [% Backlog] ), "Sem dados no período", FORMAT ( [% Backlog], "0.0%", "pt-BR" ) & " ainda sem solução" )
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "Backlog"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: ca34834a-5df7-4f03-a979-0340b4ce2c50
+
+	/// HTML do card KPI % SLA de Resposta (tema escuro azul). Aditiva.
+	measure 'HTML KPI SLA Resposta' =
+			VAR _valor = [% SLA Resposta]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "0.0%", "pt-BR" ) )
+			VAR _sub = "Dentro da meta de cada prioridade"
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "% SLA de Resposta"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: cbb6cbf1-e87b-44dc-829c-cf4ab71f548f
+
+	/// HTML do card KPI % SLA de Resolucao (tema escuro azul). Aditiva.
+	measure 'HTML KPI SLA Resolucao' =
+			VAR _valor = [% SLA Resolucao]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "0.0%", "pt-BR" ) )
+			VAR _sub = "Dentro da meta - Apenas fechados"
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "% SLA de Resolução"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: f161a729-d1e7-4784-a1fc-53a3c65830a4
+
+	/// HTML do card KPI Tempo Medio de Resolucao (MTTR) (tema escuro azul). Aditiva.
+	measure 'HTML KPI MTTR' =
+			VAR _valor = [MTTR]
+			VAR _txt = IF ( ISBLANK ( _valor ), "—", FORMAT ( _valor, "0.0", "pt-BR" ) & " h" )
+			VAR _sub = "MTTR - Apenas fechados"
+			VAR _cor = "#C8102E"
+			VAR _rotulo = "Tempo Médio de Resolução"
+			VAR _css =
+			    "<style>
+			    *{box-sizing:border-box;}
+			    html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}
+			    .card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;
+			          padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;
+			          background-origin:border-box;background-clip:padding-box,padding-box,border-box;
+			          background-image:radial-gradient(120% 100% at 0% 0%," & _cor & "00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);
+			          box-shadow:0 1px 3px rgba(120,30,40,.06);
+			          font-family:'Segoe UI',Arial,sans-serif;}
+			    .bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:" & _cor & ";box-shadow:none;}
+			    .label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;
+			           letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}
+			    .period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    </style>"
+			RETURN
+			    _css
+			        & "<div class='card' role='img' aria-label='" & _rotulo & ": " & _txt & ", " & _sub & "'>"
+			        & "<div class='bar'></div>"
+			        & "<div class='label'>" & _rotulo & "</div>"
+			        & "<div class='value'>" & _txt & "</div>"
+			        & "<div class='period'>" & _sub & "</div>"
+			        & "</div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 628fd920-9c4c-43f9-b1d6-859ff2712632
+
+	/// HTML (SVG) do grafico Chamados abertos x fechados por mes. Aditiva. Moldura 982 x 246. Paleta azul.
+	measure 'HTML Grafico Abertos x Fechados' =
+			VAR _y0 = YEAR ( CALCULATE ( MIN ( 'dw fato_chamados'[data_abertura] ), REMOVEFILTERS () ) )
+			VAR _y1 = YEAR ( CALCULATE ( MAX ( 'dw fato_chamados'[data_fechamento] ), REMOVEFILTERS () ) )
+			VAR _b = ADDCOLUMNS ( FILTER ( SUMMARIZE ( 'dw dim_calendario', 'dw dim_calendario'[ano], 'dw dim_calendario'[mes] ), 'dw dim_calendario'[ano] >= _y0 && 'dw dim_calendario'[ano] <= _y1 ), "@ab", [Total Chamados], "@fe", [Fechados no Período], "@k", 'dw dim_calendario'[ano] * 100 + 'dw dim_calendario'[mes] )
+			VAR _m0 = FILTER ( _b, NOT ISBLANK ( [@ab] ) || NOT ISBLANK ( [@fe] ) )
+			VAR _m = ADDCOLUMNS ( _m0, "@i", RANKX ( _m0, [@k], , ASC, DENSE ) )
+			VAR _n = COUNTROWS ( _m )
+			VAR _la = COALESCE ( MAXX ( FILTER ( _m, NOT ISBLANK ( [@ab] ) ), [@i] ), _n )
+			VAR _mx = COALESCE ( MAX ( MAXX ( _m, [@ab] ), MAXX ( _m, [@fe] ) ), 1 )
+			VAR _mg = POWER ( 10, INT ( LOG10 ( MAX ( _mx, 1 ) ) ) )
+			VAR _ym = CEILING ( MAX ( _mx, 1 ), _mg / 2 )
+			VAR _px0 = 72
+			VAR _px1 = 812
+			VAR _top = 90
+			VAR _bot = 197
+			VAR _sx = DIVIDE ( _px1 - _px0, MAX ( _n, 1 ) )
+			VAR _step = MAX ( 1, ROUNDUP ( DIVIDE ( _n, 8 ), 0 ) )
+			VAR _head = "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>" & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 982 246' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>" & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Chamados abertos x fechados por mês</text>" & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Fluxo de chamados mensal</text>"
+			VAR _grid = CONCATENATEX ( GENERATESERIES ( 0, 4, 1 ), VAR _k = [Value] VAR _y = _bot - _k / 4 * ( _bot - _top ) VAR _v = _ym * _k / 4 RETURN "<line x1='" & _px0 & "' y1='" & FORMAT ( _y, "0.0", "en-US" ) & "' x2='" & _px1 & "' y2='" & FORMAT ( _y, "0.0", "en-US" ) & "' stroke='#F1E6E7' stroke-width='1'/>" & "<text x='60' y='" & FORMAT ( _y + 5, "0.0", "en-US" ) & "' font-size='13' fill='#A8979A' text-anchor='end'>" & IF ( _v = 0, "0", IF ( _v >= 1000, FORMAT ( ROUND ( _v / 1000, 1 ), "General Number", "pt-BR" ) & " mil", FORMAT ( _v, "0", "pt-BR" ) ) ) & "</text>", "" )
+			VAR _lbl = CONCATENATEX ( FILTER ( _m, MOD ( [@i] - 1, _step ) = 0 ), "<text x='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' y='" & ( _bot + 28 ) & "' font-size='13' fill='" & IF ( [@i] > _la, "#A8979A", "#7D6669" ) & "' text-anchor='middle'>" & SWITCH ( 'dw dim_calendario'[mes], 1, "jan", 2, "fev", 3, "mar", 4, "abr", 5, "mai", 6, "jun", 7, "jul", 8, "ago", 9, "set", 10, "out", 11, "nov", "dez" ) & "/" & RIGHT ( FORMAT ( 'dw dim_calendario'[ano], "0" ), 2 ) & "</text>", "" )
+			VAR _pa = CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@ab] ) ), FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "," & FORMAT ( _bot - DIVIDE ( [@ab], _ym ) * ( _bot - _top ), "0.0", "en-US" ), " ", [@i], ASC )
+			VAR _pf = CONCATENATEX ( FILTER ( _m, [@i] <= _la && NOT ISBLANK ( [@fe] ) ), FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "," & FORMAT ( _bot - DIVIDE ( [@fe], _ym ) * ( _bot - _top ), "0.0", "en-US" ), " ", [@i], ASC )
+			VAR _pt = CONCATENATEX ( FILTER ( _m, [@i] >= _la && NOT ISBLANK ( [@fe] ) ), FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "," & FORMAT ( _bot - DIVIDE ( [@fe], _ym ) * ( _bot - _top ), "0.0", "en-US" ), " ", [@i], ASC )
+			VAR _da = IF ( _n <= 14, CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@ab] ) && [@i] < _la ), "<circle cx='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' cy='" & FORMAT ( _bot - DIVIDE ( [@ab], _ym ) * ( _bot - _top ), "0.0", "en-US" ) & "' r='4' fill='#C8102E' stroke='#FFFFFF' stroke-width='2'/>", "" ), "" )
+			VAR _df = IF ( _n <= 14, CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@fe] ) && [@i] < _la ), "<circle cx='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' cy='" & FORMAT ( _bot - DIVIDE ( [@fe], _ym ) * ( _bot - _top ), "0.0", "en-US" ) & "' r='4' fill='#F08A97' stroke='#FFFFFF' stroke-width='2'/>", "" ), "" )
+			VAR _xl = _px0 + ( _la - 0.5 ) * _sx
+			VAR _abL = MAXX ( FILTER ( _m, [@i] = _la ), [@ab] )
+			VAR _feL = MAXX ( FILTER ( _m, [@i] = _la ), [@fe] )
+			VAR _yA = _bot - DIVIDE ( _abL, _ym ) * ( _bot - _top )
+			VAR _yF = _bot - DIVIDE ( _feL, _ym ) * ( _bot - _top )
+			VAR _lyF = IF ( _yF - _yA >= 34, _yF - 8, _yA + 26 )
+			VAR _hl = IF ( NOT ISBLANK ( _abL ), "<circle cx='" & FORMAT ( _xl, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yA, "0.0", "en-US" ) & "' r='11' fill='#C8102E' fill-opacity='.14'/>" & "<circle cx='" & FORMAT ( _xl, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yA, "0.0", "en-US" ) & "' r='6' fill='#C8102E' stroke='#FFFFFF' stroke-width='2.5'/>" & "<text x='" & FORMAT ( _xl + 20, "0.0", "en-US" ) & "' y='" & FORMAT ( _yA + 6, "0.0", "en-US" ) & "' font-size='15' font-weight='600' fill='#C8102E'>Abertos<tspan dx='9' font-size='17.5' font-weight='700' fill='#2B1518'>" & FORMAT ( _abL, "#,0", "pt-BR" ) & "</tspan></text>", "" ) & IF ( NOT ISBLANK ( _feL ), "<circle cx='" & FORMAT ( _xl, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yF, "0.0", "en-US" ) & "' r='11' fill='#F08A97' fill-opacity='.14'/>" & "<circle cx='" & FORMAT ( _xl, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yF, "0.0", "en-US" ) & "' r='6' fill='#F08A97' stroke='#FFFFFF' stroke-width='2.5'/>" & "<text x='" & FORMAT ( _xl + 20, "0.0", "en-US" ) & "' y='" & FORMAT ( _lyF, "0.0", "en-US" ) & "' font-size='15' font-weight='600' fill='#D9465A'>Fechados<tspan dx='9' font-size='17.5' font-weight='700' fill='#2B1518'>" & FORMAT ( _feL, "#,0", "pt-BR" ) & "</tspan></text>", "" )
+			VAR _xT = _px0 + ( _n - 0.5 ) * _sx
+			VAR _vT = MAXX ( FILTER ( _m, [@i] = _n ), [@fe] )
+			VAR _yT = _bot - DIVIDE ( _vT, _ym ) * ( _bot - _top )
+			VAR _dt = FORMAT ( CALCULATE ( MAX ( 'dw fato_chamados'[data_abertura] ) ), "dd/MM", "pt-BR" )
+			VAR _tail = IF ( _n > _la && NOT ISBLANK ( _vT ), "<circle cx='" & FORMAT ( _xT, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yT, "0.0", "en-US" ) & "' r='5' fill='#FFFFFF' stroke='#F08A97' stroke-width='2.5'/>" & "<text x='" & FORMAT ( _xT + 16, "0.0", "en-US" ) & "' y='" & FORMAT ( _yT - 6, "0.0", "en-US" ) & "' font-size='14' font-weight='700' fill='#C8102E'>" & FORMAT ( _vT, "#,0", "pt-BR" ) & "</text>" & "<text x='" & FORMAT ( _xT + 16, "0.0", "en-US" ) & "' y='" & FORMAT ( _yT + 11, "0.0", "en-US" ) & "' font-size='12' fill='#A8979A'>parcial · após " & _dt & "</text>", "" )
+			VAR _empty = "<style>html,body{margin:0;height:100%;background:transparent}.p{position:fixed;inset:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;color:#7D6669;font:14px Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style><div class='p'>Sem dados para o filtro selecionado</div>"
+			RETURN IF ( _n = 0, _empty, _head & _grid & _lbl & "<polyline points='" & _pa & "' fill='none' stroke='#C8102E' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>" & "<polyline points='" & _pf & "' fill='none' stroke='#F08A97' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>" & IF ( _n > _la, "<polyline points='" & _pt & "' fill='none' stroke='#F08A97' stroke-opacity='.7' stroke-width='2.5' stroke-dasharray='2 7' stroke-linecap='round'/>", "" ) & _da & _df & _hl & _tail & "</svg></div>" )
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 8777aeaa-3f51-4d28-b5fe-de327c860ce7
+
+	/// HTML (SVG) do grafico Chamados por status. Aditiva. Moldura 689 x 246. Paleta azul.
+	measure 'HTML Grafico Status' =
+			VAR _t = [Total Chamados]
+			VAR _bk = COALESCE ( [Backlog], 0 )
+			VAR _rows = DATATABLE ( "lab", STRING, "i", INTEGER, "c", STRING, { { "ABERTO", 0, "#C8102E" }, { "EM ANDAMENTO", 1, "#8E1B2A" }, { "FECHADO", 2, "#F6B9C1" } } )
+			VAR _bars = CONCATENATEX ( _rows, VAR _lab = [lab] VAR _v = COALESCE ( CALCULATE ( [Total Chamados], KEEPFILTERS ( 'dw fato_chamados'[status] = _lab ) ), 0 ) VAR _cy = 98 + [i] * 48 VAR _w = IF ( _v > 0, MAX ( DIVIDE ( _v, _t ) * 250, 14 ), 0 ) RETURN "<text x='152' y='" & ( _cy + 6 ) & "' font-size='14.5' font-weight='500' fill='#2B1518' text-anchor='end'>" & _lab & "</text>" & "<rect x='168' y='" & ( _cy - 14 ) & "' width='250' height='28' rx='8' fill='#8E1B2A' fill-opacity='.09'/>" & IF ( _w > 0, "<rect x='168' y='" & ( _cy - 14 ) & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='28' rx='8' fill='" & [c] & "'/>", "" ) & "<text x='434' y='" & ( _cy + 7 ) & "' font-size='19' font-weight='700' fill='#2B1518'>" & FORMAT ( _v, "#,0", "pt-BR" ) & "</text>" & "<text x='510' y='" & ( _cy + 7 ) & "' font-size='14.5' fill='#7D6669'>" & FORMAT ( DIVIDE ( _v, _t ), "0.0%", "pt-BR" ) & "</text>", "", [i], ASC )
+			VAR _empty = "<style>html,body{margin:0;height:100%;background:transparent}.p{position:fixed;inset:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;color:#7D6669;font:14px Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style><div class='p'>Sem dados para o filtro selecionado</div>"
+			RETURN IF ( ISBLANK ( _t ), _empty, "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>" & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 689 246' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>" & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Chamados por status</text>" & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Situação atual dos chamados</text>" & _bars & "<path d='M595 84 h8 v76 h-8' fill='none' stroke='#8E1B2A' stroke-width='2' stroke-opacity='.85' stroke-linejoin='round'/>" & "<text x='615' y='119' font-size='13.5' font-weight='600' fill='#C8102E'>Backlog</text>" & "<text x='615' y='140' font-size='17.5' font-weight='700' fill='#2B1518'>" & FORMAT ( _bk, "#,0", "pt-BR" ) & "</text>" & "<text x='28' y='234' font-size='12.5' fill='#A8979A'>Barras proporcionais ao total de " & FORMAT ( _t, "#,0", "pt-BR" ) & " chamados</text>" & "</svg></div>" )
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 70dedd43-9acb-4fda-86ca-5515aec02d51
+
+	/// HTML (SVG) do grafico % SLA por mes de abertura. Aditiva. Moldura 982 x 246. Paleta azul.
+	measure 'HTML Grafico SLA Mensal' =
+			VAR _y0 = YEAR ( CALCULATE ( MIN ( 'dw fato_chamados'[data_abertura] ), REMOVEFILTERS () ) )
+			VAR _y1 = YEAR ( CALCULATE ( MAX ( 'dw fato_chamados'[data_abertura] ), REMOVEFILTERS () ) )
+			VAR _b = ADDCOLUMNS ( FILTER ( SUMMARIZE ( 'dw dim_calendario', 'dw dim_calendario'[ano], 'dw dim_calendario'[mes] ), 'dw dim_calendario'[ano] >= _y0 && 'dw dim_calendario'[ano] <= _y1 ), "@ab", [Total Chamados], "@r", [% SLA Resposta], "@s", [% SLA Resolucao], "@k", 'dw dim_calendario'[ano] * 100 + 'dw dim_calendario'[mes] )
+			VAR _m0 = FILTER ( _b, NOT ISBLANK ( [@ab] ) )
+			VAR _m = ADDCOLUMNS ( _m0, "@i", RANKX ( _m0, [@k], , ASC, DENSE ) )
+			VAR _n = COUNTROWS ( _m )
+			VAR _ls = COALESCE ( MAXX ( FILTER ( _m, NOT ISBLANK ( [@s] ) ), [@i] ), _n )
+			VAR _lr = COALESCE ( MAXX ( FILTER ( _m, NOT ISBLANK ( [@r] ) ), [@i] ), _n )
+			VAR _px0 = 72
+			VAR _px1 = 812
+			VAR _top = 90
+			VAR _bot = 197
+			VAR _sx = DIVIDE ( _px1 - _px0, MAX ( _n, 1 ) )
+			VAR _step = MAX ( 1, ROUNDUP ( DIVIDE ( _n, 8 ), 0 ) )
+			VAR _grid = CONCATENATEX ( GENERATESERIES ( 0, 4, 1 ), VAR _k = [Value] VAR _y = _bot - _k / 4 * ( _bot - _top ) RETURN "<line x1='" & _px0 & "' y1='" & FORMAT ( _y, "0.0", "en-US" ) & "' x2='" & _px1 & "' y2='" & FORMAT ( _y, "0.0", "en-US" ) & "' stroke='#F1E6E7' stroke-width='1'/>" & "<text x='60' y='" & FORMAT ( _y + 5, "0.0", "en-US" ) & "' font-size='13' fill='#A8979A' text-anchor='end'>" & FORMAT ( _k / 4, "0%", "pt-BR" ) & "</text>", "" )
+			VAR _lbl = CONCATENATEX ( FILTER ( _m, MOD ( [@i] - 1, _step ) = 0 ), "<text x='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' y='" & ( _bot + 28 ) & "' font-size='13' fill='#7D6669' text-anchor='middle'>" & SWITCH ( 'dw dim_calendario'[mes], 1, "jan", 2, "fev", 3, "mar", 4, "abr", 5, "mai", 6, "jun", 7, "jul", 8, "ago", 9, "set", 10, "out", 11, "nov", "dez" ) & "/" & RIGHT ( FORMAT ( 'dw dim_calendario'[ano], "0" ), 2 ) & "</text>", "" )
+			VAR _ps = CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@s] ) ), FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "," & FORMAT ( _bot - [@s] * ( _bot - _top ), "0.0", "en-US" ), " ", [@i], ASC )
+			VAR _pr = CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@r] ) ), FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "," & FORMAT ( _bot - [@r] * ( _bot - _top ), "0.0", "en-US" ), " ", [@i], ASC )
+			VAR _ds = IF ( _n <= 14, CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@s] ) && [@i] < _ls ), "<circle cx='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' cy='" & FORMAT ( _bot - [@s] * ( _bot - _top ), "0.0", "en-US" ) & "' r='4' fill='#F08A97' stroke='#FFFFFF' stroke-width='2'/>", "" ), "" )
+			VAR _dr = IF ( _n <= 14, CONCATENATEX ( FILTER ( _m, NOT ISBLANK ( [@r] ) && [@i] < _lr ), "<circle cx='" & FORMAT ( _px0 + ( [@i] - 0.5 ) * _sx, "0.0", "en-US" ) & "' cy='" & FORMAT ( _bot - [@r] * ( _bot - _top ), "0.0", "en-US" ) & "' r='3.5' fill='#C8102E' stroke='#FFFFFF' stroke-width='2'/>", "" ), "" )
+			VAR _xs = _px0 + ( _ls - 0.5 ) * _sx
+			VAR _xr = _px0 + ( _lr - 0.5 ) * _sx
+			VAR _vs = MAXX ( FILTER ( _m, [@i] = _ls ), [@s] )
+			VAR _vr = MAXX ( FILTER ( _m, [@i] = _lr ), [@r] )
+			VAR _ys = _bot - _vs * ( _bot - _top )
+			VAR _yr = _bot - _vr * ( _bot - _top )
+			VAR _lyr = IF ( _yr - _ys < 24, _ys + 26, _yr + 6 )
+			VAR _lm = MAXX ( FILTER ( _m, [@i] = _n ), 'dw dim_calendario'[mes] )
+			VAR _la = MAXX ( FILTER ( _m, [@i] = _n ), 'dw dim_calendario'[ano] )
+			VAR _mn = SWITCH ( _lm, 1, "jan", 2, "fev", 3, "mar", 4, "abr", 5, "mai", 6, "jun", 7, "jul", 8, "ago", 9, "set", 10, "out", 11, "nov", "dez" ) & "/" & RIGHT ( FORMAT ( _la, "0" ), 2 )
+			VAR _hl = IF ( NOT ISBLANK ( _vs ), "<circle cx='" & FORMAT ( _xs, "0.0", "en-US" ) & "' cy='" & FORMAT ( _ys, "0.0", "en-US" ) & "' r='11' fill='#F08A97' fill-opacity='.14'/>" & "<circle cx='" & FORMAT ( _xs, "0.0", "en-US" ) & "' cy='" & FORMAT ( _ys, "0.0", "en-US" ) & "' r='6' fill='#F08A97' stroke='#FFFFFF' stroke-width='2.5'/>" & "<text x='" & FORMAT ( _xs + 20, "0.0", "en-US" ) & "' y='" & FORMAT ( _ys + 6, "0.0", "en-US" ) & "' font-size='15' font-weight='600' fill='#D9465A'>Resolução<tspan dx='9' font-size='17.5' font-weight='700' fill='#2B1518'>" & FORMAT ( _vs, "0.0%", "pt-BR" ) & "</tspan></text>", "" ) & IF ( NOT ISBLANK ( _vr ), "<circle cx='" & FORMAT ( _xr, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yr, "0.0", "en-US" ) & "' r='11' fill='#C8102E' fill-opacity='.14'/>" & "<circle cx='" & FORMAT ( _xr, "0.0", "en-US" ) & "' cy='" & FORMAT ( _yr, "0.0", "en-US" ) & "' r='6' fill='#C8102E' stroke='#FFFFFF' stroke-width='2.5'/>" & "<text x='" & FORMAT ( _xr + 20, "0.0", "en-US" ) & "' y='" & FORMAT ( _lyr, "0.0", "en-US" ) & "' font-size='15' font-weight='600' fill='#C8102E'>Resposta<tspan dx='9' font-size='17.5' font-weight='700' fill='#2B1518'>" & FORMAT ( _vr, "0.0%", "pt-BR" ) & "</tspan></text>" & "<text x='" & FORMAT ( _xr + 20, "0.0", "en-US" ) & "' y='" & FORMAT ( _lyr + 22, "0.0", "en-US" ) & "' font-size='12' fill='#A8979A'>valores de " & _mn & "</text>", "" )
+			VAR _empty = "<style>html,body{margin:0;height:100%;background:transparent}.p{position:fixed;inset:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;color:#7D6669;font:14px Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style><div class='p'>Sem dados para o filtro selecionado</div>"
+			RETURN IF ( _n = 0, _empty, "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>" & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 982 246' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>" & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>% SLA por mês de abertura</text>" & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Chamados atendidos dentro do prazo</text>" & _grid & _lbl & "<polyline points='" & _ps & "' fill='none' stroke='#F08A97' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>" & "<polyline points='" & _pr & "' fill='none' stroke='#C8102E' stroke-width='3' stroke-dasharray='9 7' stroke-linejoin='round'/>" & _ds & _dr & _hl & "</svg></div>" )
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: bfc1a0d8-d9b1-40d3-8616-b4e90b290bd1
+
+	/// HTML (SVG) do grafico Chamados por pais do analista. Respeita a RLS. Usa dw dim_pais[nome_pais]. Aditiva. Moldura 689 x 246. Paleta azul.
+	measure 'HTML Grafico Paises' =
+			VAR _c1 = FILTER ( ADDCOLUMNS ( VALUES ( 'dw dim_pais'[nome_pais] ), "@v", [Total Chamados] ), NOT ISBLANK ( [@v] ) )
+			VAR _c2 = ADDCOLUMNS ( _c1, "@rn", RANKX ( _c1, 'dw dim_pais'[nome_pais], , ASC, DENSE ) )
+			VAR _c3 = ADDCOLUMNS ( _c2, "@r", RANKX ( _c2, [@v] * 1000 - [@rn], , DESC, DENSE ) )
+			VAR _nc = COUNTROWS ( _c3 )
+			VAR _mx = COALESCE ( MAXX ( _c3, [@v] ), 1 )
+			VAR _mg = POWER ( 10, INT ( LOG10 ( MAX ( _mx, 1 ) ) ) )
+			VAR _ym = CEILING ( MAX ( _mx, 1 ), _mg / 2 )
+			VAR _avg = AVERAGEX ( _c3, [@v] )
+			VAR _tx0 = 150
+			VAR _tw = 420
+			VAR _y0 = 106
+			VAR _pitch = MIN ( 24, DIVIDE ( 142, MAX ( _nc, 1 ) ) )
+			VAR _bars = CONCATENATEX ( _c3, VAR _cy = _y0 + ( [@r] - 1 ) * _pitch VAR _w = DIVIDE ( [@v], _ym ) * _tw RETURN "<text x='" & ( _tx0 - 16 ) & "' y='" & FORMAT ( _cy + 5, "0.0", "en-US" ) & "' font-size='14' font-weight='500' fill='#2B1518' text-anchor='end'>" & UPPER ( 'dw dim_pais'[nome_pais] ) & "</text>" & "<rect x='" & _tx0 & "' y='" & FORMAT ( _cy - 8, "0.0", "en-US" ) & "' width='" & _tw & "' height='16' rx='6' fill='#8E1B2A' fill-opacity='.09'/>" & "<rect x='" & _tx0 & "' y='" & FORMAT ( _cy - 8, "0.0", "en-US" ) & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='6' fill='#C8102E'/>" & "<text x='" & FORMAT ( _tx0 + _w + 12, "0.0", "en-US" ) & "' y='" & FORMAT ( _cy + 5, "0.0", "en-US" ) & "' font-size='14' font-weight='600' fill='#2B1518'>" & FORMAT ( [@v], "#,0", "pt-BR" ) & "</text>", "", [@r], ASC )
+			VAR _mxl = _tx0 + DIVIDE ( _avg, _ym ) * _tw
+			VAR _mean = IF ( _nc > 1, "<line x1='" & FORMAT ( _mxl, "0.0", "en-US" ) & "' y1='" & FORMAT ( _y0 - 18, "0.0", "en-US" ) & "' x2='" & FORMAT ( _mxl, "0.0", "en-US" ) & "' y2='" & FORMAT ( _y0 + ( _nc - 1 ) * _pitch + 16, "0.0", "en-US" ) & "' stroke='#8E1B2A' stroke-width='1.5' stroke-opacity='.5' stroke-dasharray='3 5'/>" & "<text x='" & FORMAT ( _mxl, "0.0", "en-US" ) & "' y='" & FORMAT ( _y0 - 24, "0.0", "en-US" ) & "' font-size='12.5' fill='#7D6669' text-anchor='middle'>média " & FORMAT ( _avg, "#,0", "pt-BR" ) & "</text>", "" )
+			VAR _empty = "<style>html,body{margin:0;height:100%;background:transparent}.p{position:fixed;inset:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;color:#7D6669;font:14px Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style><div class='p'>Sem dados para o filtro selecionado</div>"
+			RETURN IF ( _nc = 0, _empty, "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>" & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 689 246' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>" & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Chamados por país do analista</text>" & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Chamados por país</text>" & _bars & _mean & "</svg></div>" )
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: c9305bc1-0ddd-43f5-9fb9-e24e79f90d77
+
+	/// HTML (SVG) do grafico pequeno SLA por prioridade. Aditiva. Moldura 982 x 190. Paleta azul.
+	measure 'HTML Grafico SLA Prioridade' =
+			VAR _p = ADDCOLUMNS ( DATATABLE ( "pr", STRING, "i", INTEGER, { { "CRÍTICA", 0 }, { "ALTA", 1 }, { "MÉDIA", 2 }, { "BAIXA", 3 } } ), "@sr", VAR _x = [pr] RETURN CALCULATE ( [% SLA Resposta], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ), "@sv", VAR _x = [pr] RETURN CALCULATE ( [% SLA Resolucao], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ) )
+			VAR _minS = MINX ( FILTER ( _p, NOT ISBLANK ( [@sv] ) ), [@sv] )
+			VAR _minN = MAXX ( FILTER ( _p, [@sv] = _minS ), [pr] )
+			VAR _sub = IF ( ISBLANK ( _minS ), "Sem chamados fechados no filtro selecionado", "Cumprimento dos prazos por prioridade · menor resolução: " & _minN & " (" & FORMAT ( _minS, "0.0%", "pt-BR" ) & ")" )
+			VAR _gw = 232
+			VAR _base = 154
+			VAR _bh = 58
+			VAR _g = CONCATENATEX ( _p, VAR _gx = 28 + [i] * _gw VAR _cx = _gx + _gw / 2 VAR _low = NOT ISBLANK ( _minS ) && [@sv] = _minS RETURN IF ( _low, "<rect x='" & ( _gx + 10 ) & "' y='80' width='" & ( _gw - 20 ) & "' height='98' rx='12' fill='#8E1B2A' fill-opacity='.09'/>", "" ) & "<rect x='" & ( _cx - 50 ) & "' y='" & ( _base - _bh ) & "' width='46' height='" & _bh & "' rx='7' fill='#8E1B2A' fill-opacity='.09'/>" & "<rect x='" & ( _cx + 4 ) & "' y='" & ( _base - _bh ) & "' width='46' height='" & _bh & "' rx='7' fill='#8E1B2A' fill-opacity='.09'/>" & IF ( NOT ISBLANK ( [@sr] ), "<rect x='" & ( _cx - 50 ) & "' y='" & FORMAT ( _base - MAX ( _bh * [@sr], 3 ), "0.0", "en-US" ) & "' width='46' height='" & FORMAT ( MAX ( _bh * [@sr], 3 ), "0.0", "en-US" ) & "' rx='7' fill='#C8102E'/>", "" ) & IF ( NOT ISBLANK ( [@sv] ), "<rect x='" & ( _cx + 4 ) & "' y='" & FORMAT ( _base - MAX ( _bh * [@sv], 3 ), "0.0", "en-US" ) & "' width='46' height='" & FORMAT ( MAX ( _bh * [@sv], 3 ), "0.0", "en-US" ) & "' rx='7' fill='#F6B9C1'/>", "" ) & "<text x='" & ( _cx - 27 ) & "' y='" & ( _base - _bh - 7 ) & "' font-size='14.5' font-weight='700' fill='#2B1518' text-anchor='middle'>" & IF ( ISBLANK ( [@sr] ), "—", FORMAT ( [@sr], "0.0%", "pt-BR" ) ) & "</text>" & "<text x='" & ( _cx + 27 ) & "' y='" & ( _base - _bh - 7 ) & "' font-size='14.5' font-weight='700' fill='#2B1518' text-anchor='middle'>" & IF ( ISBLANK ( [@sv] ), "—", FORMAT ( [@sv], "0.0%", "pt-BR" ) ) & "</text>" & "<text x='" & _cx & "' y='" & ( _base + 22 ) & "' font-size='14' font-weight='600' fill='" & IF ( _low, "#C8102E", "#2B1518" ) & "' text-anchor='middle'>" & [pr] & "</text>", "", [i], ASC )
+			RETURN "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>" & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 982 190' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>" & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>SLA por prioridade</text>" & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>" & _sub & "</text>" & "<circle cx='630' cy='34' r='5' fill='#C8102E'/><text x='642' y='38' font-size='13.5' fill='#7D6669'>Resposta (todos)</text>" & "<circle cx='782' cy='34' r='5' fill='#F6B9C1'/><text x='794' y='38' font-size='13.5' fill='#7D6669'>Resolução (só fechados)</text>" & _g & "</svg></div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 9a3c2027-be26-4626-bcac-1cf61326504a
+
+	/// HTML (SVG) do grafico pequeno Chamados por prioridade (fechados e backlog). Aditiva. Tamanho de referencia 689 x 190. Paleta azul.
+	measure 'HTML Grafico Chamados por Prioridade' =
+			VAR _p =
+			    ADDCOLUMNS (
+			        DATATABLE ( "pr", STRING, "i", INTEGER, { { "CRÍTICA", 0 }, { "ALTA", 1 }, { "MÉDIA", 2 }, { "BAIXA", 3 } } ),
+			        "@t", VAR _x = [pr] RETURN CALCULATE ( [Total Chamados], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ),
+			        "@b", VAR _x = [pr] RETURN CALCULATE ( [Backlog], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ),
+			        "@f", VAR _x = [pr] RETURN CALCULATE ( [Fechados], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) )
+			    )
+			VAR _mx = COALESCE ( MAXX ( _p, [@t] ), 1 )
+			VAR _tx0 = 118
+			VAR _tw = 300
+			VAR _rows =
+			    CONCATENATEX (
+			        FILTER ( _p, NOT ISBLANK ( [@t] ) ),
+			        VAR _cy = 90 + [i] * 27
+			        VAR _w = DIVIDE ( [@t], _mx ) * _tw
+			        VAR _wf = DIVIDE ( COALESCE ( [@f], 0 ), [@t] ) * _w
+			        RETURN
+			            "<text x='" & ( _tx0 - 14 ) & "' y='" & ( _cy + 5 ) & "' font-size='13.5' font-weight='500' fill='#2B1518' text-anchor='end'>" & [pr] & "</text>"
+			                & "<clipPath id='k" & [i] & "'><rect x='" & _tx0 & "' y='" & ( _cy - 8 ) & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='6'/></clipPath>"
+			                & "<rect x='" & _tx0 & "' y='" & ( _cy - 8 ) & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='6' fill='#C8102E'/>"
+			                & "<rect x='" & _tx0 & "' y='" & ( _cy - 8 ) & "' width='" & FORMAT ( _wf, "0.0", "en-US" ) & "' height='16' fill='#F6B9C1' clip-path='url(#k" & [i] & ")'/>"
+			                & "<text x='" & FORMAT ( _tx0 + _w + 12, "0.0", "en-US" ) & "' y='" & ( _cy + 5 ) & "' font-size='14' font-weight='700' fill='#2B1518'>" & FORMAT ( [@t], "#,0", "pt-BR" ) & "</text>"
+			                & "<text x='" & FORMAT ( _tx0 + _w + 68, "0.0", "en-US" ) & "' y='" & ( _cy + 5 ) & "' font-size='12.5' fill='#7D6669'>" & FORMAT ( DIVIDE ( COALESCE ( [@b], 0 ), [@t] ), "0.0%", "pt-BR" ) & " em backlog</text>",
+			        "",
+			        [i], ASC
+			    )
+			RETURN
+			    "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style>"
+			        & "<div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 689 190' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>"
+			        & "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Chamados por prioridade</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Volume de chamados fechados e em backlog por prioridade</text>"
+			        & "<circle cx='489' cy='34' r='5' fill='#F6B9C1'/><text x='501' y='38' font-size='13.5' fill='#7D6669'>Fechados</text>"
+			        & "<circle cx='581' cy='34' r='5' fill='#C8102E'/><text x='593' y='38' font-size='13.5' fill='#7D6669'>Backlog</text>"
+			        & _rows & "</svg></div>"
+		displayFolder: Página 1 - Visão Executiva
+		lineageTag: 2801e068-a5a7-4830-bb05-969a4551d069
+
+	/// Data de hoje. Atualiza sozinha a cada dia.
+	measure 'Data Atual' = TODAY ()
+		formatString: dd/MM/yyyy
+		displayFolder: 7 Botao Hoje
+		lineageTag: d34df559-6794-4ac1-a570-199e4d5c1cc6
+
+	/// Quantos chamados foram abertos hoje, ignorando o filtro de Ano e Mes. Serve para saber se ha dados na data atual.
+	measure 'Chamados na Data Atual' = COALESCE ( CALCULATE ( COUNTROWS ( 'dw fato_chamados' ), REMOVEFILTERS ( 'dw dim_calendario' ), 'dw dim_calendario'[data] = TODAY () ), 0 )
+		formatString: #,0
+		displayFolder: 7 Botao Hoje
+		lineageTag: ce14af60-d528-4d0e-86e4-9401606e6725
+
+	/// 1 quando o botao Hoje esta ligado, 0 quando esta desligado.
+	measure 'Filtro Hoje Ativo' = IF ( SELECTEDVALUE ( 'Filtro Rapido de Data'[Filtro Rapido de Data] ) = "Hoje", 1, 0 )
+		formatString: 0
+		displayFolder: 7 Botao Hoje
+		lineageTag: bc809782-d3a0-4063-bd32-1485d64e519e
+
+	/// Texto do botao Hoje: mostra a data quando ligado e avisa se ainda nao ha dados na data atual.
+	measure 'Texto Botao Hoje' = IF ( [Filtro Hoje Ativo] = 1, IF ( [Chamados na Data Atual] = 0, "Hoje · sem dados", "Hoje · " & FORMAT ( TODAY (), "dd/MM", "pt-BR" ) ), "Hoje" )
+		displayFolder: 7 Botao Hoje
+		lineageTag: ed7fd83a-f8da-4794-97be-a6af99cf4d84
+
+	/// Quantidade de analistas no contexto de filtro (País, analista escolhido e RLS).
+	measure Analistas = DISTINCTCOUNT('dw dim_analista'[id_analista])
+		formatString: #,0
+		displayFolder: 4 Equipe
+		lineageTag: f177f1c7-01f5-4159-87bb-7652b6651660
+
+	/// Backlog dividido pelo número de analistas no contexto.
+	measure 'Backlog por Analista' = DIVIDE([Backlog], [Analistas])
+		formatString: #,0
+		displayFolder: 4 Equipe
+		lineageTag: 6aa2a580-d6bf-49ea-8aee-02cd26e2a790
+
+	/// id do analista quando o segmentador tem exatamente um analista; senão fica em branco.
+	measure 'Analista ID Selecionado' = SELECTEDVALUE('dw dim_analista'[id_analista])
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: f3a51364-fa8c-4757-9e4e-8ac3871914f1
+
+	measure 'Analista Nome Selecionado' = SELECTEDVALUE('dw dim_analista'[nome])
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: bf5babb9-dc07-4364-87b7-01b6a6072e2a
+
+	measure 'Analista Nivel Selecionado' = SELECTEDVALUE('dw dim_analista'[nivel])
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: ca940036-bb2a-4eae-b0a5-0ae04b206cad
+
+	measure 'Analista Pais Selecionado' =
+			VAR _p = SELECTEDVALUE ( 'dw dim_analista'[id_pais] )
+			RETURN IF ( ISBLANK ( _p ), BLANK (), LOOKUPVALUE ( 'dw dim_pais'[nome_pais], 'dw dim_pais'[id_pais], _p ) )
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: ea3c5c4b-2a64-4bf8-87c2-cf7250e5a9ac
+
+	/// Posição do analista escolhido na carga (1 = mais chamados), entre todos os analistas visíveis.
+	measure 'Rank Carga Analista' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _t = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( 'dw dim_analista'[id_analista] ), "@v", [Total Chamados] ), REMOVEFILTERS ( 'dw dim_analista' ) )
+			VAR _f = FILTER ( _t, NOT ISBLANK ( [@v] ) )
+			VAR _mine = MAXX ( FILTER ( _f, 'dw dim_analista'[id_analista] = _id ), [@v] )
+			RETURN IF ( ISBLANK ( _id ) || ISBLANK ( _mine ), BLANK (), COUNTROWS ( FILTER ( _f, [@v] > _mine ) ) + 1 )
+		formatString: 0
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: 1a6921d3-244a-40e5-9cd1-804b8a42fc84
+
+	/// Posição do analista escolhido no MTTR (1 = menor MTTR), entre todos os analistas visíveis.
+	measure 'Rank MTTR Analista' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _t = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( 'dw dim_analista'[id_analista] ), "@v", [MTTR] ), REMOVEFILTERS ( 'dw dim_analista' ) )
+			VAR _f = FILTER ( _t, NOT ISBLANK ( [@v] ) )
+			VAR _mine = MAXX ( FILTER ( _f, 'dw dim_analista'[id_analista] = _id ), [@v] )
+			RETURN IF ( ISBLANK ( _id ) || ISBLANK ( _mine ), BLANK (), COUNTROWS ( FILTER ( _f, [@v] < _mine ) ) + 1 )
+		formatString: 0
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: b5519b3a-ad70-4970-91ad-258f6f3ad2a1
+
+	/// Estilo dos cartões KPI da página 2. O símbolo @@ é trocado pela cor do cartão.
+	measure 'Equipe CSS KPI' = "<style>*{box-sizing:border-box;}html,body{margin:0 !important;padding:0 !important;width:100%;height:100%;background:transparent;overflow:hidden;}.card{position:fixed;left:0;top:0;right:0;bottom:0;width:100vw;height:100vh;margin:0;display:flex;flex-direction:column;justify-content:center;padding:0 3% 0 7%;border:1px solid transparent;border-radius:16px;overflow:hidden;background-origin:border-box;background-clip:padding-box,padding-box,border-box;background-image:radial-gradient(120% 100% at 0% 0%,@@00 0%,transparent 60%),linear-gradient(160deg,#FFFFFF 0%,#FFFFFF 100%),linear-gradient(135deg,#ECDCDD 0%,#ECDCDD 100%);box-shadow:0 1px 3px rgba(120,30,40,.06);font-family:'Segoe UI',Arial,sans-serif;}.bar{position:absolute;left:0;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:@@;box-shadow:none;}.label{color:#7D6669;font-size:clamp(13px,min(11vh,6.2vw),25px);font-weight:400;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.value{color:#2B1518;font-size:clamp(24px,min(32vh,16vw),80px);font-weight:700;line-height:1.05;margin:.1em 0 .06em;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;}.period{color:#A8979A;font-size:clamp(12px,min(10vh,5.6vw),21px);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.delta{color:#C8102E;font-weight:600;}.pf{padding:0 3% 0 6%;}.row{display:flex;align-items:center;gap:7%;width:100%;}.av{flex:none;width:min(62vh,30vw);height:min(62vh,30vw);border-radius:50%;background:linear-gradient(145deg,#C8102E,#8E1B2A);color:#FFFFFF;font-weight:700;font-size:clamp(14px,min(24vh,9vw),32px);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #ECDCDD;}.txt{min-width:0;flex:1;}.name{color:#2B1518;font-weight:700;font-size:clamp(13px,min(17vh,7vw),22px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.sub2{color:#7D6669;font-size:clamp(11px,min(12vh,5.4vw),18px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.hl{color:#C8102E;font-weight:600;font-size:clamp(11px,min(12vh,5.4vw),18px);white-space:nowrap;}</style>"
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: e840dfc7-e8c9-41cf-87fc-3ba476f4f65e
+
+	/// Molde do cartão KPI padrão da página 2. Trocas: @@ cor, @R rótulo, @V valor, @S apoio.
+	measure 'Equipe KPI Molde' = [Equipe CSS KPI] & "<div class='card' role='img' aria-label='@R: @V'><div class='bar'></div><div class='label'>@R</div><div class='value'>@V</div><div class='period'>@S</div></div>"
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: 14dfd255-417e-4eec-aca1-7ff617411e59
+
+	/// Cartão 2 da página 2. Sem analista: carga média por analista. Com analista: chamados e % vs média da equipe. Aditiva.
+	measure 'HTML Equipe KPI Chamados' =
+			VAR _sel = NOT ISBLANK ( [Analista ID Selecionado] )
+			VAR _cor = "#C8102E"
+			VAR _rot = IF ( _sel, "Chamados", "Carga média por analista" )
+			VAR _txt = FORMAT ( IF ( _sel, [Total Chamados], [Carga Média por Analista] ), "#,0", "pt-BR" )
+			VAR _sub = IF ( _sel, "<span class='delta'>" & FORMAT ( [Carga vs Equipe (%)], "+0.0%;-0.0%;0.0%", "pt-BR" ) & "</span> vs média da equipe", "Chamados por analista" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", _rot ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 2 - Equipe
+		lineageTag: b80587e4-a204-4e84-b40d-8410a5890295
+
+	/// Cartão 3 da página 2. Sem analista: MTTR da equipe. Com analista: MTTR e diferença vs equipe. Aditiva.
+	measure 'HTML Equipe KPI MTTR' =
+			VAR _sel = NOT ISBLANK ( [Analista ID Selecionado] )
+			VAR _cor = "#C8102E"
+			VAR _m = [MTTR]
+			VAR _eq = [MTTR Equipe]
+			VAR _rot = IF ( _sel, "MTTR", "MTTR da equipe" )
+			VAR _txt = IF ( _sel, IF ( ISBLANK ( _m ), "—", FORMAT ( _m, "0.0", "pt-BR" ) & " h" ), FORMAT ( _eq, "0.0", "pt-BR" ) & " h" )
+			VAR _sub = IF ( _sel, IF ( ISBLANK ( _m ), "sem chamados fechados", "<span class='delta'>" & FORMAT ( _m - _eq, "+0.0;-0.0;0.0", "pt-BR" ) & " h</span> vs equipe (" & FORMAT ( _eq, "0.0", "pt-BR" ) & " h)" ), "MTTR - Apenas chamados fechados" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", _rot ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 37b3dadc-53de-4f4d-8ee5-63aa73acb7ce
+
+	/// Cartão 4 da página 2: % SLA de Resolução (com referência da equipe quando há analista). Aditiva.
+	measure 'HTML Equipe KPI SLA Resolucao' =
+			VAR _sel = NOT ISBLANK ( [Analista ID Selecionado] )
+			VAR _cor = "#C8102E"
+			VAR _v = [% SLA Resolucao]
+			VAR _eq = CALCULATE ( [% SLA Resolucao], REMOVEFILTERS ( 'dw dim_analista' ) )
+			VAR _rot = "% SLA de Resolução"
+			VAR _txt = IF ( ISBLANK ( _v ), "—", FORMAT ( _v, "0.0%", "pt-BR" ) )
+			VAR _sub = IF ( _sel, "Equipe: " & FORMAT ( _eq, "0.0%", "pt-BR" ), "Dentro da meta - Apenas fechados" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", _rot ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 3721f1bb-ae1a-485f-92e3-01ee0cc715c1
+
+	/// Cartão 5 da página 2. Sem analista: backlog por analista. Com analista: % SLA de Resposta vs equipe. Aditiva.
+	measure 'HTML Equipe KPI SLA Resposta' =
+			VAR _sel = NOT ISBLANK ( [Analista ID Selecionado] )
+			VAR _cor = "#C8102E"
+			VAR _v = [% SLA Resposta]
+			VAR _eq = CALCULATE ( [% SLA Resposta], REMOVEFILTERS ( 'dw dim_analista' ) )
+			VAR _rot = IF ( _sel, "% SLA de Resposta", "Backlog por analista" )
+			VAR _txt = IF ( _sel, IF ( ISBLANK ( _v ), "—", FORMAT ( _v, "0.0%", "pt-BR" ) ), FORMAT ( [Backlog por Analista], "#,0", "pt-BR" ) )
+			VAR _sub = IF ( _sel, "Equipe: " & FORMAT ( _eq, "0.0%", "pt-BR" ), "Chamados sem solução por analista" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", _rot ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 2 - Equipe
+		lineageTag: b285a5af-4b0a-44c0-ae82-a67657a38196
+
+	/// Cartão 6 da página 2: críticos no backlog (equipe ou analista). Aditiva.
+	measure 'HTML Equipe KPI Criticos' =
+			VAR _cor = "#C8102E"
+			VAR _rot = "Críticos no Backlog"
+			VAR _txt = FORMAT ( COALESCE ( [Backlog Crítico], 0 ), "#,0", "pt-BR" )
+			VAR _sub = "De " & FORMAT ( COALESCE ( [Chamados Críticos], 0 ), "#,0", "pt-BR" ) & " chamados críticos"
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", _rot ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 2 - Equipe
+		lineageTag: cc416286-be63-4699-9c08-137aaef72892
+
+	/// Moldura dos gráficos SVG da página 2. Trocas: @W largura, @H altura, @C conteúdo.
+	measure 'Equipe Moldura Grafico' = "<style>*{box-sizing:border-box}html,body{margin:0;padding:0;width:100%;height:100%;background:transparent;overflow:hidden}.p{position:fixed;left:0;top:0;right:0;bottom:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;box-shadow:0 1px 3px rgba(120,30,40,.06);overflow:hidden}svg{display:block;width:100%;height:100%}</style><div class='p'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 @W @H' preserveAspectRatio='xMidYMid meet' font-family='Segoe UI,Arial,sans-serif'>@C</svg></div>"
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: 4776a7f6-cf05-4c11-8ac2-8dbb649f39e8
+
+	/// Aviso padrão quando não há dados para o filtro selecionado (gráficos da página 2).
+	measure 'Equipe Grafico Vazio' = "<style>html,body{margin:0;height:100%;background:transparent}.p{position:fixed;inset:0;border:1px solid #ECDCDD;border-radius:18px;background:#FFFFFF;color:#7D6669;font:14px Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center}</style><div class='p'>Sem dados para o filtro selecionado</div>"
+		isHidden
+		displayFolder: Página 2 - Equipe\Auxiliares
+		lineageTag: 3598dd63-e12b-4cd1-993f-3750e02897af
+
+	/// Ranking das analistas por carga (top 6, mais a escolhida se estiver fora do top). Todas as analistas continuam visíveis; a escolhida fica em destaque. Moldura 982 x 246. Aditiva.
+	measure 'HTML Equipe Grafico Ranking' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _t = CALCULATETABLE (
+			    ADDCOLUMNS (
+			        VALUES ( 'dw dim_analista'[id_analista] ),
+			        "@n", CALCULATE ( MAX ( 'dw dim_analista'[nome] ) ),
+			        "@nv", CALCULATE ( MAX ( 'dw dim_analista'[nivel] ) ),
+			        "@pn", LOOKUPVALUE ( 'dw dim_pais'[nome_pais], 'dw dim_pais'[id_pais], CALCULATE ( MAX ( 'dw dim_analista'[id_pais] ) ) ),
+			        "@v", [Total Chamados]
+			    ),
+			    REMOVEFILTERS ( 'dw dim_analista' )
+			)
+			VAR _f = FILTER ( _t, NOT ISBLANK ( [@v] ) )
+			VAR _r = ADDCOLUMNS ( _f, "@r", VAR _x = [@v] VAR _i = 'dw dim_analista'[id_analista] RETURN COUNTROWS ( FILTER ( _f, [@v] > _x || ( [@v] = _x && 'dw dim_analista'[id_analista] < _i ) ) ) + 1 )
+			VAR _nT = COUNTROWS ( _r )
+			VAR _avg = AVERAGEX ( _r, [@v] )
+			VAR _mx = MAXX ( _r, [@v] )
+			VAR _selR = MAXX ( FILTER ( _r, NOT ISBLANK ( _id ) && 'dw dim_analista'[id_analista] = _id ), [@r] )
+			VAR _lim = IF ( ISBLANK ( _selR ) || _selR <= 6, 6, 5 )
+			VAR _show = FILTER ( _r, [@r] <= _lim || ( NOT ISBLANK ( _id ) && 'dw dim_analista'[id_analista] = _id ) )
+			VAR _rows = CONCATENATEX (
+			    _show,
+			    VAR _pos = IF ( [@r] <= _lim, [@r], 6 )
+			    VAR _y = 98 + ( _pos - 1 ) * 25
+			    VAR _sel = NOT ISBLANK ( _id ) && 'dw dim_analista'[id_analista] = _id
+			    VAR _w = DIVIDE ( [@v], _mx ) * 400
+			    VAR _d = DIVIDE ( [@v], _avg ) - 1
+			    VAR _niv = UPPER ( LEFT ( [@nv], 1 ) ) & LOWER ( MID ( [@nv], 2, 50 ) )
+			    VAR _pa = UPPER ( LEFT ( [@pn], 1 ) ) & LOWER ( MID ( [@pn], 2, 50 ) )
+			    VAR _yt = FORMAT ( _y + 4.5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _y - 6, "0.0", "en-US" )
+			    RETURN
+			        IF ( _sel, "<rect x='18' y='" & FORMAT ( _y - 13, "0.0", "en-US" ) & "' width='946' height='25' rx='8' fill='#C8102E' fill-opacity='.16' stroke='#C8102E' stroke-opacity='.55'/>", "" )
+			            & "<text x='34' y='" & _yt & "' font-size='12.5' fill='#A8979A' text-anchor='middle'>" & [@r] & "</text>"
+			            & "<text x='54' y='" & _yt & "' font-size='13.5' font-weight='600' fill='" & IF ( _sel, "#C8102E", "#2B1518" ) & "'>" & UPPER ( [@n] ) & "</text>"
+			            & "<text x='270' y='" & _yt & "' font-size='12' fill='#7D6669'>" & _niv & " · " & _pa & "</text>"
+			            & "<rect x='430' y='" & _yb & "' width='400' height='12' rx='6' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='430' y='" & _yb & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='12' rx='6' fill='" & IF ( _sel, "#8E1B2A", "#C8102E" ) & "'/>"
+			            & "<text x='" & FORMAT ( 440 + _w, "0.0", "en-US" ) & "' y='" & _yt & "' font-size='13.5' font-weight='600' fill='#2B1518'>" & FORMAT ( [@v], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='954' y='" & _yt & "' font-size='13' font-weight='600' text-anchor='end' fill='" & IF ( _d >= 0, "#C8102E", "#B5485A" ) & "'>" & FORMAT ( _d, "+0.0%;-0.0%;0.0%", "pt-BR" ) & "</text>",
+			    "",
+			    [@r], ASC
+			)
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Ranking de analistas por carga</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Top " & MIN ( 6, _nT ) & " analistas com maior volume de chamados (de " & _nT & ") · % em relação à média da equipe" & IF ( NOT ISBLANK ( _id ), " · destaque = analista escolhida", "" ) & "</text>"
+			        & _rows
+			        & "<text x='28' y='240' font-size='11.5' fill='#A8979A'>média da equipe: " & FORMAT ( _avg, "#,0", "pt-BR" ) & " chamados por analista</text>"
+			RETURN
+			    IF ( _nT = 0, [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "982" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 288f3a8e-4683-44de-9dda-37030a659798
+
+	/// MTTR por nível (barras), linha da equipe e marcador da analista escolhida. Moldura 689 x 246. Aditiva.
+	measure 'HTML Equipe Grafico MTTR Nivel' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _lv = DATATABLE ( "niv", STRING, "ord", INTEGER, { { "JÚNIOR", 1 }, { "PLENO", 2 }, { "SÊNIOR", 3 } } )
+			VAR _d = ADDCOLUMNS (
+			    _lv,
+			    "@m", VAR _n = [niv] RETURN CALCULATE ( [MTTR], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n ),
+			    "@q", VAR _n = [niv] RETURN CALCULATE ( [Analistas], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n )
+			)
+			VAR _eq = [MTTR Equipe]
+			VAR _sm = IF ( ISBLANK ( _id ), BLANK (), [MTTR] )
+			VAR _sn = [Analista Nivel Selecionado]
+			VAR _nome = UPPER ( [Analista Nome Selecionado] )
+			VAR _mx = MAX ( MAX ( COALESCE ( MAXX ( _d, [@m] ), 0 ), COALESCE ( _sm, 0 ) ), COALESCE ( _eq, 0 ) ) * 1.1
+			VAR _rows = CONCATENATEX (
+			    _d,
+			    VAR _cy = 104 + ( [ord] - 1 ) * 46
+			    VAR _isSel = NOT ISBLANK ( _id ) && [niv] = _sn
+			    VAR _w = DIVIDE ( [@m], _mx ) * 330
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 7, "0.0", "en-US" )
+			    VAR _mk = IF ( _isSel && NOT ISBLANK ( _sm ),
+			        VAR _cx = 120 + DIVIDE ( _sm, _mx ) * 330
+			        RETURN "<circle cx='" & FORMAT ( _cx, "0.0", "en-US" ) & "' cy='" & FORMAT ( _cy, "0.0", "en-US" ) & "' r='6.5' fill='#FFFFFF' stroke='#C8102E' stroke-width='3'/>"
+			            & "<text x='" & FORMAT ( MAX ( _cx, 170 ), "0.0", "en-US" ) & "' y='" & FORMAT ( _cy + 24, "0.0", "en-US" ) & "' font-size='11.5' font-weight='600' fill='#2B1518' text-anchor='middle'>" & _nome & " " & FORMAT ( _sm, "0.0", "pt-BR" ) & " h</text>",
+			        "" )
+			    RETURN
+			        "<text x='28' y='" & _yt & "' font-size='13' font-weight='600' fill='#2B1518'>" & [niv] & "</text>"
+			            & "<rect x='120' y='" & _yb & "' width='330' height='14' rx='7' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='120' y='" & _yb & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='14' rx='7' fill='" & IF ( _isSel, "#8E1B2A", "#C8102E" ) & "'/>"
+			            & "<text x='466' y='" & _yt & "' font-size='15' font-weight='700' fill='#2B1518'>" & FORMAT ( [@m], "0.0", "pt-BR" ) & " h</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12.5' fill='#7D6669' text-anchor='end'>" & [@q] & " analistas</text>"
+			            & _mk,
+			    "",
+			    [ord], ASC
+			)
+			VAR _xe = 120 + DIVIDE ( _eq, _mx ) * 330
+			VAR _line = "<line x1='" & FORMAT ( _xe, "0.0", "en-US" ) & "' y1='88' x2='" & FORMAT ( _xe, "0.0", "en-US" ) & "' y2='226' stroke='#8E1B2A' stroke-opacity='.5' stroke-width='1.5' stroke-dasharray='3 5'/>"
+			    & "<text x='" & FORMAT ( _xe, "0.0", "en-US" ) & "' y='82' font-size='12' fill='#7D6669' text-anchor='middle'>equipe " & FORMAT ( _eq, "0.0", "pt-BR" ) & " h</text>"
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>MTTR por nível</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Tempo médio de resolução por senioridade</text>"
+			        & _rows & _line
+			        & "<text x='28' y='240' font-size='11.5' fill='#A8979A'>menor MTTR = resolução mais rápida</text>"
+			RETURN
+			    IF ( ISBLANK ( _eq ), [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "689" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 8cf256ec-9e40-4967-9c58-778f972ff385
+
+	/// Distribuição das analistas por nível; destaca o nível da analista escolhida. Moldura 689 x 246. Aditiva.
+	measure 'HTML Equipe Grafico Analistas Nivel' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _lv = DATATABLE ( "niv", STRING, "ord", INTEGER, { { "JÚNIOR", 1 }, { "PLENO", 2 }, { "SÊNIOR", 3 } } )
+			VAR _d = ADDCOLUMNS (
+			    _lv,
+			    "@q", VAR _n = [niv] RETURN CALCULATE ( [Analistas], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n )
+			)
+			VAR _sn = [Analista Nivel Selecionado]
+			VAR _tot = SUMX ( _d, [@q] )
+			VAR _mx = MAXX ( _d, [@q] )
+			VAR _rows = CONCATENATEX (
+			    _d,
+			    VAR _cy = 104 + ( [ord] - 1 ) * 46
+			    VAR _isSel = NOT ISBLANK ( _id ) && [niv] = _sn
+			    VAR _w = DIVIDE ( [@q], _mx ) * 330
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 8, "0.0", "en-US" )
+			    RETURN
+			        "<text x='28' y='" & _yt & "' font-size='13' font-weight='600' fill='#2B1518'>" & [niv] & "</text>"
+			            & "<rect x='120' y='" & _yb & "' width='330' height='16' rx='8' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='120' y='" & _yb & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='8' fill='" & IF ( _isSel, "#8E1B2A", "#C8102E" ) & "'/>"
+			            & "<text x='466' y='" & _yt & "' font-size='15' font-weight='700' fill='#2B1518'>" & FORMAT ( [@q], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12.5' fill='#7D6669' text-anchor='end'>" & FORMAT ( DIVIDE ( [@q], _tot ), "0.0%", "pt-BR" ) & "</text>"
+			            & IF ( _isSel, "<text x='120' y='" & FORMAT ( _cy + 25, "0.0", "en-US" ) & "' font-size='11' font-weight='600' fill='#C8102E'>nível da analista escolhida</text>", "" ),
+			    "",
+			    [ord], ASC
+			)
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Analistas por nível</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Distribuição da equipe por senioridade (" & FORMAT ( _tot, "#,0", "pt-BR" ) & " analistas)</text>"
+			        & _rows
+			RETURN
+			    IF ( COALESCE ( _tot, 0 ) = 0, [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "689" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: a0ca7f59-d624-46ba-985a-4b600d7ab694
+
+	/// Quadrantes Carga x MTTR: 4 caixas com a quantidade de analistas (carga acima/abaixo da média x MTTR abaixo/acima da equipe); a caixa da analista escolhida fica em destaque. Moldura 982 x 246. Aditiva.
+	measure 'HTML Equipe Grafico Carga x MTTR' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _t = CALCULATETABLE (
+			    ADDCOLUMNS ( VALUES ( 'dw dim_analista'[id_analista] ), "@v", [Total Chamados], "@m", [MTTR] ),
+			    REMOVEFILTERS ( 'dw dim_analista' )
+			)
+			VAR _f = FILTER ( _t, NOT ISBLANK ( [@v] ) && NOT ISBLANK ( [@m] ) )
+			VAR _nT = COUNTROWS ( _f )
+			VAR _avg = AVERAGEX ( _f, [@v] )
+			VAR _eq = [MTTR Equipe]
+			VAR _qTL = COUNTROWS ( FILTER ( _f, [@v] < _avg && [@m] < _eq ) )
+			VAR _qTR = COUNTROWS ( FILTER ( _f, [@v] >= _avg && [@m] < _eq ) )
+			VAR _qBL = COUNTROWS ( FILTER ( _f, [@v] < _avg && [@m] >= _eq ) )
+			VAR _qBR = COUNTROWS ( FILTER ( _f, [@v] >= _avg && [@m] >= _eq ) )
+			VAR _selRow = FILTER ( _f, NOT ISBLANK ( _id ) && 'dw dim_analista'[id_analista] = _id )
+			VAR _has = COUNTROWS ( _selRow ) > 0
+			VAR _sv = MAXX ( _selRow, [@v] )
+			VAR _sm = MAXX ( _selRow, [@m] )
+			VAR _right = _sv >= _avg
+			VAR _top = _sm < _eq
+			VAR _hTL = _has && NOT _right && _top
+			VAR _hTR = _has && _right && _top
+			VAR _hBL = _has && NOT _right && NOT _top
+			VAR _hBR = _has && _right && NOT _top
+			VAR _nome = UPPER ( [Analista Nome Selecionado] )
+			VAR _cw = MAX ( 100, LEN ( _nome ) * 7.6 + 26 )
+			VAR _chipX = IF ( _right, 538, 130 ) + 396 - 14 - _cw
+			VAR _chipY = IF ( _top, 88, 164 ) + 38
+			VAR _chip = IF ( _has,
+			    "<rect x='" & FORMAT ( _chipX, "0.0", "en-US" ) & "' y='" & FORMAT ( _chipY, "0.0", "en-US" ) & "' width='" & FORMAT ( _cw, "0.0", "en-US" ) & "' height='22' rx='11' fill='#2B1518'/>"
+			        & "<text x='" & FORMAT ( _chipX + _cw / 2, "0.0", "en-US" ) & "' y='" & FORMAT ( _chipY + 15, "0.0", "en-US" ) & "' font-size='11.5' font-weight='600' fill='#FFFFFF' text-anchor='middle'>" & _nome & "</text>",
+			    "" )
+			VAR _bTL = "<rect x='130' y='88' width='396' height='68' rx='12' fill='" & IF ( _hTL, "#C8102E", "#F7EEEF" ) & "' fill-opacity='" & IF ( _hTL, ".16", "1" ) & "' stroke='" & IF ( _hTL, "#C8102E", "#ECDCDD" ) & "' stroke-opacity='" & IF ( _hTL, ".6", "1" ) & "'/>"
+			    & "<text x='154' y='136' font-size='36' font-weight='600' fill='" & IF ( _hTL, "#C8102E", "#B5485A" ) & "'>" & FORMAT ( _qTL, "#,0", "pt-BR" ) & "</text>"
+			    & "<text x='214' y='122' font-size='14' font-weight='600' fill='#2B1518'>Rápidas e leves</text>"
+			    & "<text x='214' y='142' font-size='12' fill='#7D6669'>carga baixa, resolvem rápido</text>"
+			VAR _bTR = "<rect x='538' y='88' width='396' height='68' rx='12' fill='" & IF ( _hTR, "#C8102E", "#F7EEEF" ) & "' fill-opacity='" & IF ( _hTR, ".16", "1" ) & "' stroke='" & IF ( _hTR, "#C8102E", "#ECDCDD" ) & "' stroke-opacity='" & IF ( _hTR, ".6", "1" ) & "'/>"
+			    & "<text x='562' y='136' font-size='36' font-weight='600' fill='" & IF ( _hTR, "#C8102E", "#B5485A" ) & "'>" & FORMAT ( _qTR, "#,0", "pt-BR" ) & "</text>"
+			    & "<text x='622' y='122' font-size='13.5' font-weight='600' fill='#2B1518'>Rápidas e sobrecarregadas</text>"
+			    & "<text x='622' y='142' font-size='12' fill='#7D6669'>carga alta, resolvem rápido</text>"
+			VAR _bBL = "<rect x='130' y='164' width='396' height='68' rx='12' fill='" & IF ( _hBL, "#C8102E", "#F7EEEF" ) & "' fill-opacity='" & IF ( _hBL, ".16", "1" ) & "' stroke='" & IF ( _hBL, "#C8102E", "#ECDCDD" ) & "' stroke-opacity='" & IF ( _hBL, ".6", "1" ) & "'/>"
+			    & "<text x='154' y='212' font-size='36' font-weight='600' fill='" & IF ( _hBL, "#C8102E", "#B5485A" ) & "'>" & FORMAT ( _qBL, "#,0", "pt-BR" ) & "</text>"
+			    & "<text x='214' y='198' font-size='14' font-weight='600' fill='#2B1518'>Lentas e leves</text>"
+			    & "<text x='214' y='218' font-size='12' fill='#7D6669'>carga baixa, demoram mais</text>"
+			VAR _bBR = "<rect x='538' y='164' width='396' height='68' rx='12' fill='" & IF ( _hBR, "#C8102E", "#F7EEEF" ) & "' fill-opacity='" & IF ( _hBR, ".16", "1" ) & "' stroke='" & IF ( _hBR, "#C8102E", "#ECDCDD" ) & "' stroke-opacity='" & IF ( _hBR, ".6", "1" ) & "'/>"
+			    & "<text x='562' y='212' font-size='36' font-weight='600' fill='" & IF ( _hBR, "#C8102E", "#B5485A" ) & "'>" & FORMAT ( _qBR, "#,0", "pt-BR" ) & "</text>"
+			    & "<text x='622' y='198' font-size='13.5' font-weight='600' fill='#2B1518'>Lentas e sobrecarregadas</text>"
+			    & "<text x='622' y='218' font-size='12' fill='#7D6669'>carga alta, demoram mais</text>"
+			VAR _svg =
+			    "<text x='28' y='38' font-size='21' font-weight='600' fill='#2B1518'>Carga x MTTR por analista</text>"
+			        & "<text x='28' y='60' font-size='14.5' fill='#7D6669'>Relação entre volume de chamados e tempo de resolução · médias da equipe: " & FORMAT ( _avg, "#,0", "pt-BR" ) & " chamados e " & FORMAT ( _eq, "0.0", "pt-BR" ) & " h" & IF ( _has, " · destaque: " & _nome, "" ) & "</text>"
+			        & "<text x='328' y='80' font-size='11.5' fill='#A8979A' text-anchor='middle'>carga abaixo da média</text>"
+			        & "<text x='736' y='80' font-size='11.5' fill='#A8979A' text-anchor='middle'>carga acima da média</text>"
+			        & "<text x='122' y='126' font-size='11.5' fill='#A8979A' text-anchor='end'>MTTR menor</text>"
+			        & "<text x='122' y='202' font-size='11.5' fill='#A8979A' text-anchor='end'>MTTR maior</text>"
+			        & _bTL & _bTR & _bBL & _bBR & _chip
+			RETURN
+			    IF ( _nT = 0, [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "982" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 4c88edd7-7871-4a38-ad86-e1d423ae8048
+
+	/// SLA de resposta e de resolução por nível, com traços da analista escolhida. Moldura 982 x 190. Aditiva.
+	measure 'HTML Equipe Grafico SLA Nivel' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _lv = DATATABLE ( "niv", STRING, "ord", INTEGER, { { "JÚNIOR", 1 }, { "PLENO", 2 }, { "SÊNIOR", 3 } } )
+			VAR _d = ADDCOLUMNS (
+			    _lv,
+			    "@rp", VAR _n = [niv] RETURN CALCULATE ( [% SLA Resposta], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n ),
+			    "@rs", VAR _n = [niv] RETURN CALCULATE ( [% SLA Resolucao], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n )
+			)
+			VAR _sn = [Analista Nivel Selecionado]
+			VAR _sRp = [% SLA Resposta]
+			VAR _sRs = [% SLA Resolucao]
+			VAR _minV = MINX ( _d, [@rs] )
+			VAR _minL = MAXX ( FILTER ( _d, [@rs] = _minV ), [niv] )
+			VAR _rows = CONCATENATEX (
+			    _d,
+			    VAR _cx = 200 + ( [ord] - 1 ) * 291
+			    VAR _isSel = NOT ISBLANK ( _id ) && [niv] = _sn
+			    VAR _hp = COALESCE ( [@rp], 0 ) * 74
+			    VAR _hs = COALESCE ( [@rs], 0 ) * 74
+			    VAR _yp = 150 - COALESCE ( _sRp, 0 ) * 74
+			    VAR _ys = 150 - COALESCE ( _sRs, 0 ) * 74
+			    VAR _tk = IF ( _isSel,
+			        "<line x1='" & FORMAT ( _cx - 58, "0.0", "en-US" ) & "' y1='" & FORMAT ( _yp, "0.0", "en-US" ) & "' x2='" & FORMAT ( _cx - 2, "0.0", "en-US" ) & "' y2='" & FORMAT ( _yp, "0.0", "en-US" ) & "' stroke='#8E1B2A' stroke-width='2.2'/>"
+			            & "<text x='" & FORMAT ( _cx - 64, "0.0", "en-US" ) & "' y='" & FORMAT ( _yp + 4, "0.0", "en-US" ) & "' font-size='11.5' font-weight='600' fill='#2B1518' text-anchor='end'>" & FORMAT ( _sRp, "0.0%", "pt-BR" ) & "</text>"
+			            & "<line x1='" & FORMAT ( _cx + 2, "0.0", "en-US" ) & "' y1='" & FORMAT ( _ys, "0.0", "en-US" ) & "' x2='" & FORMAT ( _cx + 58, "0.0", "en-US" ) & "' y2='" & FORMAT ( _ys, "0.0", "en-US" ) & "' stroke='#8E1B2A' stroke-width='2.2'/>"
+			            & "<text x='" & FORMAT ( _cx + 64, "0.0", "en-US" ) & "' y='" & FORMAT ( _ys + 4, "0.0", "en-US" ) & "' font-size='11.5' font-weight='600' fill='#2B1518'>" & FORMAT ( _sRs, "0.0%", "pt-BR" ) & "</text>",
+			        "" )
+			    RETURN
+			        "<rect x='" & FORMAT ( _cx - 52, "0.0", "en-US" ) & "' y='" & FORMAT ( 150 - _hp, "0.0", "en-US" ) & "' width='44' height='" & FORMAT ( _hp, "0.0", "en-US" ) & "' rx='6' fill='#C8102E'/>"
+			            & "<rect x='" & FORMAT ( _cx + 8, "0.0", "en-US" ) & "' y='" & FORMAT ( 150 - _hs, "0.0", "en-US" ) & "' width='44' height='" & FORMAT ( _hs, "0.0", "en-US" ) & "' rx='6' fill='#F6B9C1'/>"
+			            & "<text x='" & FORMAT ( _cx - 30, "0.0", "en-US" ) & "' y='" & FORMAT ( 144 - _hp, "0.0", "en-US" ) & "' font-size='12.5' font-weight='600' fill='#2B1518' text-anchor='middle'>" & FORMAT ( [@rp], "0.0%", "pt-BR" ) & "</text>"
+			            & "<text x='" & FORMAT ( _cx + 30, "0.0", "en-US" ) & "' y='" & FORMAT ( 144 - _hs, "0.0", "en-US" ) & "' font-size='12.5' font-weight='600' fill='#2B1518' text-anchor='middle'>" & FORMAT ( [@rs], "0.0%", "pt-BR" ) & "</text>"
+			            & "<text x='" & FORMAT ( _cx, "0.0", "en-US" ) & "' y='172' font-size='13' font-weight='" & IF ( _isSel, "700", "600" ) & "' fill='" & IF ( _isSel, "#C8102E", "#2B1518" ) & "' text-anchor='middle'>" & [niv] & "</text>"
+			            & _tk,
+			    "",
+			    [ord], ASC
+			)
+			VAR _leg =
+			    "<rect x='610' y='21' width='12' height='12' rx='3' fill='#C8102E'/><text x='628' y='31' font-size='12.5' fill='#7D6669'>Resposta (todos)</text>"
+			    & "<rect x='770' y='21' width='12' height='12' rx='3' fill='#F6B9C1'/><text x='788' y='31' font-size='12.5' fill='#7D6669'>Resolução (só fechados)</text>"
+			VAR _svg =
+			    "<text x='28' y='32' font-size='19' font-weight='600' fill='#2B1518'>SLA por nível</text>"
+			        & "<text x='28' y='52' font-size='13.5' fill='#7D6669'>Desempenho dos SLAs de resposta e resolução · menor resolução: " & _minL & " (" & FORMAT ( _minV, "0.0%", "pt-BR" ) & ")" & IF ( NOT ISBLANK ( _id ), " · traço = " & UPPER ( [Analista Nome Selecionado] ), "" ) & "</text>"
+			        & _leg & _rows
+			RETURN
+			    IF ( ISBLANK ( _minV ), [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "982" ), "@H", "190" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 8c7ee3ad-51db-43ef-a182-5f4042ca9887
+
+	/// Chamados por nível (fechados e backlog). Moldura 689 x 190. Aditiva.
+	measure 'HTML Equipe Grafico Chamados Nivel' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _lv = DATATABLE ( "niv", STRING, "ord", INTEGER, { { "JÚNIOR", 1 }, { "PLENO", 2 }, { "SÊNIOR", 3 } } )
+			VAR _d = ADDCOLUMNS (
+			    _lv,
+			    "@t", VAR _n = [niv] RETURN CALCULATE ( [Total Chamados], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n ),
+			    "@b", VAR _n = [niv] RETURN CALCULATE ( [Backlog], REMOVEFILTERS ( 'dw dim_analista' ), 'dw dim_analista'[nivel] = _n )
+			)
+			VAR _sn = [Analista Nivel Selecionado]
+			VAR _mx = MAXX ( _d, [@t] )
+			VAR _rows = CONCATENATEX (
+			    _d,
+			    VAR _cy = 88 + ( [ord] - 1 ) * 34
+			    VAR _isSel = NOT ISBLANK ( _id ) && [niv] = _sn
+			    VAR _tw = DIVIDE ( COALESCE ( [@t], 0 ), _mx ) * 330
+			    VAR _fw = DIVIDE ( COALESCE ( [@t], 0 ) - COALESCE ( [@b], 0 ), _mx ) * 330
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 7, "0.0", "en-US" )
+			    RETURN
+			        IF ( _isSel, "<rect x='18' y='" & FORMAT ( _cy - 15, "0.0", "en-US" ) & "' width='653' height='30' rx='8' fill='#C8102E' fill-opacity='.14' stroke='#C8102E' stroke-opacity='.5'/>", "" )
+			            & "<text x='28' y='" & _yt & "' font-size='13' font-weight='" & IF ( _isSel, "700", "600" ) & "' fill='" & IF ( _isSel, "#C8102E", "#2B1518" ) & "'>" & [niv] & "</text>"
+			            & "<rect x='104' y='" & _yb & "' width='" & FORMAT ( _tw, "0.0", "en-US" ) & "' height='14' rx='7' fill='#C8102E'/>"
+			            & "<rect x='104' y='" & _yb & "' width='" & FORMAT ( _fw, "0.0", "en-US" ) & "' height='14' rx='7' fill='#F6B9C1'/>"
+			            & "<text x='" & FORMAT ( 114 + _tw, "0.0", "en-US" ) & "' y='" & _yt & "' font-size='14' font-weight='700' fill='#2B1518'>" & FORMAT ( [@t], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12' fill='#7D6669' text-anchor='end'>" & FORMAT ( DIVIDE ( [@b], [@t] ), "0.0%", "pt-BR" ) & " em backlog</text>",
+			    "",
+			    [ord], ASC
+			)
+			VAR _leg =
+			    "<rect x='440' y='21' width='12' height='12' rx='3' fill='#F6B9C1'/><text x='458' y='31' font-size='12.5' fill='#7D6669'>Fechados</text>"
+			    & "<rect x='540' y='21' width='12' height='12' rx='3' fill='#C8102E'/><text x='558' y='31' font-size='12.5' fill='#7D6669'>Backlog</text>"
+			VAR _svg =
+			    "<text x='28' y='32' font-size='19' font-weight='600' fill='#2B1518'>Chamados por nível</text>"
+			        & "<text x='28' y='52' font-size='13.5' fill='#7D6669'>Volume de chamados fechados e em backlog por senioridade</text>"
+			        & _leg & _rows
+			RETURN
+			    IF ( COALESCE ( _mx, 0 ) = 0, [Equipe Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe Moldura Grafico], "@W", "689" ), "@H", "190" ), "@C", _svg ) )
+		displayFolder: Página 2 - Equipe
+		lineageTag: 4685f7e2-fb10-4759-905a-fbeb8cf47a73
+
+	/// Cartão 1 da página 2. Sem analista: total de analistas. Com analista: perfil com foto (GitHub fotos-analistas; sem foto ou foto indisponível, mostra as iniciais), nome, nível, país e posições. Aditiva.
+	measure 'HTML Equipe KPI Perfil' =
+			VAR _id = [Analista ID Selecionado]
+			VAR _sel = NOT ISBLANK ( _id )
+			VAR _cor = "#C8102E"
+			VAR _nome = UPPER ( [Analista Nome Selecionado] )
+			VAR _nw = LEN ( _nome ) - LEN ( SUBSTITUTE ( _nome, " ", "" ) ) + 1
+			VAR _p = SUBSTITUTE ( _nome, " ", "|" )
+			VAR _ini = LEFT ( PATHITEM ( _p, 1 ), 1 ) & IF ( _nw > 1, LEFT ( PATHITEM ( _p, _nw ), 1 ), "" )
+			VAR _nivT = [Analista Nivel Selecionado]
+			VAR _niv = UPPER ( LEFT ( _nivT, 1 ) ) & LOWER ( MID ( _nivT, 2, 50 ) )
+			VAR _paisT = [Analista Pais Selecionado]
+			VAR _pais = UPPER ( LEFT ( _paisT, 1 ) ) & LOWER ( MID ( _paisT, 2, 50 ) )
+			VAR _rc = [Rank Carga Analista]
+			VAR _rm = [Rank MTTR Analista]
+			VAR _n = [Analistas]
+			VAR _npc = DISTINCTCOUNT ( 'dw dim_analista'[id_pais] )
+			VAR _subG = IF ( _npc > 1, FORMAT ( DIVIDE ( _n, _npc ), "0", "pt-BR" ) & " por país", "no país selecionado" )
+			VAR _gen = SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Equipe KPI Molde], "@@", _cor ), "@R", "Analistas" ), "@V", FORMAT ( _n, "#,0", "pt-BR" ) ), "@S", _subG )
+			VAR _semFoto = _id IN { 8, 10, 18, 20, 28, 38, 40, 48, 50, 60 }
+			VAR _url = "https://raw.githubusercontent.com/lucas-soliveira/fotos-analistas/main/" & FORMAT ( _id, "0" ) & ".png"
+			VAR _foto = IF ( _semFoto, "", "<img src='" & _url & "' alt=''>" )
+			VAR _estilo = "<style>.av{position:relative;overflow:hidden;}.av img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%;border-radius:50%;}</style>"
+			VAR _prf = SUBSTITUTE ( [Equipe CSS KPI], "@@", _cor ) & _estilo & "<div class='card pf' role='img' aria-label='Analista: " & _nome & "'><div class='bar'></div><div class='row'><div class='av'>" & _ini & _foto & "</div><div class='txt'><div class='name'>" & _nome & "</div><div class='sub2'>" & _niv & " · " & _pais & "</div><div class='hl'>#" & IF ( ISBLANK ( _rc ), "—", FORMAT ( _rc, "0" ) ) & " carga · #" & IF ( ISBLANK ( _rm ), "—", FORMAT ( _rm, "0" ) ) & " MTTR</div></div></div></div>"
+			RETURN IF ( _sel, _prf, _gen )
+		displayFolder: Página 2 - Equipe
+		lineageTag: d4ea75e7-37c7-46a7-ba95-009c072b9ffb
+
+	/// Campo 'Number of Rows' do botão Download Data da página 2: quantidade de analistas no filtro atual (uma linha por analista no arquivo baixado).
+	measure 'Download Equipe Linhas' = [Analistas]
+		formatString: #,0
+		displayFolder: Página 2 - Equipe\Download
+		lineageTag: b065f801-03f8-4813-a18d-25846364ada4
+
+	/// Data de referência da página 3: dia do último chamado aberto, ignorando filtros. Usada para calcular a idade do backlog.
+	measure 'Oper Data Referencia' =
+			VAR _m = CALCULATE ( MAX ( 'dw fato_chamados'[data_abertura] ), REMOVEFILTERS () )
+			RETURN DATE ( YEAR ( _m ), MONTH ( _m ), DAY ( _m ) )
+		formatString: dd/mm/yyyy
+		isHidden
+		displayFolder: Página 3 - Operacional\Auxiliares
+		lineageTag: daf47398-6d22-4f49-bfb2-3f048eaec0f6
+
+	/// Molde dos cartões KPI da página 3 (mesmo da página 2). Trocas: @@ cor, @R rótulo, @V valor, @S apoio.
+	measure 'Oper KPI Molde' = [Equipe KPI Molde]
+		isHidden
+		displayFolder: Página 3 - Operacional\Auxiliares
+		lineageTag: 88cd28d5-2f73-4da1-8928-966cb0d9726b
+
+	/// Moldura dos gráficos SVG da página 3. Trocas: @W largura, @H altura, @C conteúdo.
+	measure 'Oper Moldura Grafico' = [Equipe Moldura Grafico]
+		isHidden
+		displayFolder: Página 3 - Operacional\Auxiliares
+		lineageTag: fdac21d3-1665-49f7-a7a8-164bbddbe110
+
+	/// Aviso padrão quando não há dados para o filtro (página 3).
+	measure 'Oper Grafico Vazio' = [Equipe Grafico Vazio]
+		isHidden
+		displayFolder: Página 3 - Operacional\Auxiliares
+		lineageTag: de20ae91-06bc-47a0-a343-756619e660f1
+
+	/// Chamados em backlog abertos há mais de 30 dias (até a data de referência).
+	measure 'Oper Backlog Mais 30 Dias' =
+			VAR _ref = [Oper Data Referencia]
+			RETURN CALCULATE ( [Backlog], KEEPFILTERS ( 'dw fato_chamados'[data_abertura] < _ref - 30 ) )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 577fe86c-19f9-451a-aec4-d8b4388f5984
+
+	/// Idade média, em dias, dos chamados em backlog até a data de referência.
+	measure 'Oper Idade Media Backlog' =
+			VAR _ref = INT ( [Oper Data Referencia] )
+			RETURN AVERAGEX ( FILTER ( 'dw fato_chamados', 'dw fato_chamados'[status] <> "FECHADO" ), _ref - INT ( 'dw fato_chamados'[data_abertura] ) )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 57d67010-19d9-47f0-9111-6c7e82951b98
+
+	/// Idade, em dias, do chamado mais antigo em backlog.
+	measure 'Oper Idade Maxima Backlog' =
+			VAR _ref = INT ( [Oper Data Referencia] )
+			VAR _min = CALCULATE ( MIN ( 'dw fato_chamados'[data_abertura] ), KEEPFILTERS ( 'dw fato_chamados'[status] <> "FECHADO" ) )
+			RETURN IF ( ISBLANK ( _min ), BLANK (), _ref - INT ( _min ) )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 061cefb4-4426-4374-b64b-f610044596ff
+
+	/// Chamados em backlog de prioridade Crítica ou Alta.
+	measure 'Oper Backlog Urgente' = CALCULATE ( [Backlog], KEEPFILTERS ( 'dw fato_chamados'[prioridade] IN { "CRÍTICA", "ALTA" } ) )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 6b03f90a-fd36-471d-b8b3-5001988ab216
+
+	/// Tempo médio de resposta, em horas.
+	measure 'Oper Resposta Media' = AVERAGE ( 'dw fato_chamados'[tempo_resposta] )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 5ad8be23-abbc-4b3a-be0d-b5ab3e9db879
+
+	/// Chamados abertos menos chamados fechados no período. Positivo = backlog crescendo.
+	measure 'Oper Saldo Periodo' = COALESCE ( [Total Chamados], 0 ) - COALESCE ( [Fechados no Período], 0 )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 41ee9eb9-fcc2-4c63-b6fa-1cee87623940
+
+	/// Fechados no período para cada chamado aberto no período.
+	measure 'Oper Vazao' = DIVIDE ( [Fechados no Período], [Total Chamados] )
+		displayFolder: Página 3 - Operacional\Base
+		lineageTag: 5d544a65-8c81-493f-a203-e6b4449ed15e
+
+	/// Cartão 1 da página 3: backlog com mais de 30 dias.
+	measure 'HTML Oper KPI Backlog Antigo' =
+			VAR _cor = "#C8102E"
+			VAR _v = [Oper Backlog Mais 30 Dias]
+			VAR _p = DIVIDE ( _v, [Backlog] )
+			VAR _txt = IF ( ISBLANK ( _v ), "—", FORMAT ( _v, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( _p ), "sem backlog no filtro", "<span class='delta'>" & FORMAT ( _p, "0.0%", "pt-BR" ) & "</span> do backlog total" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Backlog acima de 30 dias" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 63988a49-2e88-4000-9ec0-1da758118591
+
+	/// Cartão 2 da página 3: idade média do backlog.
+	measure 'HTML Oper KPI Idade Backlog' =
+			VAR _cor = "#C8102E"
+			VAR _m = [Oper Idade Media Backlog]
+			VAR _x = [Oper Idade Maxima Backlog]
+			VAR _txt = IF ( ISBLANK ( _m ), "—", FORMAT ( _m, "#,0", "pt-BR" ) & " dias" )
+			VAR _sub = IF ( ISBLANK ( _x ), "sem backlog no filtro", "mais antigo: <span class='delta'>" & FORMAT ( _x, "#,0", "pt-BR" ) & " dias</span>" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Idade média do backlog" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 28da373f-f6c6-41e5-bdb7-17a9ffd69c9a
+
+	/// Cartão 3 da página 3: tempo médio de resposta.
+	measure 'HTML Oper KPI Resposta' =
+			VAR _cor = "#C8102E"
+			VAR _m = [Oper Resposta Media]
+			VAR _f = DIVIDE ( [Violações SLA Resposta], [Total Chamados] )
+			VAR _txt = IF ( ISBLANK ( _m ), "—", FORMAT ( _m, "0.0", "pt-BR" ) & " h" )
+			VAR _sub = IF ( ISBLANK ( _f ), "sem chamados no filtro", "<span class='delta'>" & FORMAT ( _f, "0.0%", "pt-BR" ) & "</span> fora do prazo de resposta" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Tempo médio de resposta" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 40767a5e-6753-4a78-bb1d-dab43ff5e8c1
+
+	/// Cartão 4 da página 3: chamados fechados fora do prazo de resolução.
+	measure 'HTML Oper KPI Violacoes Resolucao' =
+			VAR _cor = "#C8102E"
+			VAR _v = [Violações SLA Resolução]
+			VAR _p = DIVIDE ( _v, [Fechados] )
+			VAR _txt = IF ( ISBLANK ( _v ), "—", FORMAT ( _v, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( _p ), "sem chamados fechados", "<span class='delta'>" & FORMAT ( _p, "0.0%", "pt-BR" ) & "</span> dos chamados fechados" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Resolução fora do prazo" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: d07511cd-92f5-4263-a729-13efa129c7d0
+
+	/// Cartão 5 da página 3: backlog de prioridade Crítica e Alta.
+	measure 'HTML Oper KPI Backlog Urgente' =
+			VAR _cor = "#C8102E"
+			VAR _v = [Oper Backlog Urgente]
+			VAR _p = DIVIDE ( _v, [Backlog] )
+			VAR _txt = IF ( ISBLANK ( _v ), "—", FORMAT ( _v, "#,0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( _p ), "sem backlog no filtro", "Crítica + Alta · <span class='delta'>" & FORMAT ( _p, "0.0%", "pt-BR" ) & "</span> do backlog" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Backlog urgente" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 0c302443-a6b6-4065-a5f5-466d1490780b
+
+	/// Cartão 6 da página 3: saldo entre chamados abertos e fechados no período.
+	measure 'HTML Oper KPI Saldo' =
+			VAR _cor = "#C8102E"
+			VAR _s = [Oper Saldo Periodo]
+			VAR _z = [Oper Vazao]
+			VAR _txt = IF ( ISBLANK ( [Total Chamados] ), "—", FORMAT ( _s, "+#,0;-#,0;0", "pt-BR" ) )
+			VAR _sub = IF ( ISBLANK ( _z ), "sem chamados no período", "<span class='delta'>" & FORMAT ( _z * 100, "0", "pt-BR" ) & "</span> fechados a cada 100 abertos" )
+			RETURN SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper KPI Molde], "@@", _cor ), "@R", "Saldo do período" ), "@V", _txt ), "@S", _sub )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 5c52a671-e581-4473-967a-b20604923aef
+
+	/// Gráfico largo (982x246) da página 3: backlog por faixa de idade, com o total de Crítica + Alta em cada faixa.
+	measure 'HTML Oper Grafico Envelhecimento' =
+			VAR _ref = [Oper Data Referencia]
+			VAR _b = ADDCOLUMNS (
+			    DATATABLE ( "lab", STRING, "i", INTEGER, "lo", INTEGER, "hi", INTEGER, { { "Até 7 dias", 0, 0, 7 }, { "8 a 30 dias", 1, 8, 30 }, { "31 a 90 dias", 2, 31, 90 }, { "Mais de 90 dias", 3, 91, 3650 } } ),
+			    "@n", VAR _lo = [lo] VAR _hi = [hi] RETURN CALCULATE ( [Backlog], KEEPFILTERS ( 'dw fato_chamados'[data_abertura] >= _ref - _hi && 'dw fato_chamados'[data_abertura] < _ref - _lo + 1 ) ),
+			    "@u", VAR _lo = [lo] VAR _hi = [hi] RETURN CALCULATE ( [Oper Backlog Urgente], KEEPFILTERS ( 'dw fato_chamados'[data_abertura] >= _ref - _hi && 'dw fato_chamados'[data_abertura] < _ref - _lo + 1 ) )
+			)
+			VAR _tot = SUMX ( _b, COALESCE ( [@n], 0 ) )
+			VAR _mx = MAXX ( _b, COALESCE ( [@n], 0 ) )
+			VAR _rows = CONCATENATEX (
+			    _b,
+			    VAR _n = COALESCE ( [@n], 0 )
+			    VAR _u = COALESCE ( [@u], 0 )
+			    VAR _cy = 112 + [i] * 33
+			    VAR _w = DIVIDE ( _n, _mx ) * 420
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 8, "0.0", "en-US" )
+			    VAR _cl = SWITCH ( [i], 0, "#F6B9C1", 1, "#F08A97", 2, "#D9465A", "#C8102E" )
+			    RETURN
+			        "<text x='28' y='" & _yt & "' font-size='13.5' font-weight='600' fill='#2B1518'>" & [lab] & "</text>"
+			            & "<rect x='170' y='" & _yb & "' width='420' height='16' rx='8' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & IF ( _w > 0, "<rect x='170' y='" & _yb & "' width='" & FORMAT ( MAX ( _w, 6 ), "0.0", "en-US" ) & "' height='16' rx='8' fill='" & _cl & "'/>", "" )
+			            & "<text x='604' y='" & _yt & "' font-size='15' font-weight='700' fill='#2B1518'>" & FORMAT ( _n, "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='700' y='" & _yt & "' font-size='13' fill='#7D6669'>" & FORMAT ( DIVIDE ( _n, _tot ), "0.0%", "pt-BR" ) & "</text>"
+			            & "<text x='954' y='" & _yt & "' font-size='14' font-weight='600' fill='#2B1518' text-anchor='end'>" & FORMAT ( _u, "#,0", "pt-BR" ) & "</text>",
+			    "",
+			    [i], ASC
+			)
+			VAR _hd =
+			    "<text x='170' y='92' font-size='11.5' fill='#A8979A'>Chamados em backlog</text>"
+			    & "<text x='604' y='92' font-size='11.5' fill='#A8979A'>Total</text>"
+			    & "<text x='700' y='92' font-size='11.5' fill='#A8979A'>% do backlog</text>"
+			    & "<text x='954' y='92' font-size='11.5' fill='#A8979A' text-anchor='end'>Crítica + Alta</text>"
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Envelhecimento do backlog</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Há quanto tempo os chamados em aberto estão parados</text>"
+			        & _hd & _rows
+			        & "<text x='28' y='238' font-size='11.5' fill='#A8979A'>Idade contada até " & FORMAT ( _ref, "dd/MM/yyyy", "pt-BR" ) & " (data do último chamado aberto)</text>"
+			RETURN
+			    IF ( COALESCE ( _tot, 0 ) = 0, [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "982" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 78924621-c1c6-49d9-bc61-a9379a956950
+
+	/// Gráfico estreito (689x246) da página 3: backlog por categoria e % de cada categoria ainda em backlog.
+	measure 'HTML Oper Grafico Backlog Categoria' =
+			VAR _c1 = FILTER ( ADDCOLUMNS ( VALUES ( 'dw fato_chamados'[categoria] ), "@b", [Backlog], "@t", [Total Chamados] ), NOT ISBLANK ( [@b] ) )
+			VAR _c2 = ADDCOLUMNS ( _c1, "@rn", RANKX ( _c1, 'dw fato_chamados'[categoria], , ASC, DENSE ) )
+			VAR _c3 = ADDCOLUMNS ( _c2, "@r", RANKX ( _c2, [@b] * 1000 - [@rn], , DESC, DENSE ) )
+			VAR _nc = COUNTROWS ( _c3 )
+			VAR _mx = COALESCE ( MAXX ( _c3, [@b] ), 1 )
+			VAR _tx0 = 168
+			VAR _tw = 300
+			VAR _rows = CONCATENATEX (
+			    _c3,
+			    VAR _cy = 110 + ( [@r] - 1 ) * 28
+			    VAR _w = DIVIDE ( [@b], _mx ) * _tw
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 8, "0.0", "en-US" )
+			    RETURN
+			        "<text x='152' y='" & _yt & "' font-size='13.5' font-weight='500' fill='#2B1518' text-anchor='end'>" & UPPER ( 'dw fato_chamados'[categoria] ) & "</text>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & _tw & "' height='16' rx='8' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & FORMAT ( MAX ( _w, 6 ), "0.0", "en-US" ) & "' height='16' rx='8' fill='#C8102E'/>"
+			            & "<text x='" & FORMAT ( _tx0 + _w + 12, "0.0", "en-US" ) & "' y='" & _yt & "' font-size='14' font-weight='700' fill='#2B1518'>" & FORMAT ( [@b], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12.5' fill='#7D6669' text-anchor='end'>" & FORMAT ( DIVIDE ( [@b], [@t] ), "0.0%", "pt-BR" ) & " do total" & "</text>",
+			    "",
+			    [@r], ASC
+			)
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Backlog por categoria</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Chamados em aberto por categoria · % de cada categoria que continua em backlog</text>"
+			        & _rows
+			RETURN
+			    IF ( _nc = 0, [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "689" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 67625eef-c9f6-4511-afa6-c5cbc124ad00
+
+	/// Gráfico largo (982x246) da página 3: violações de SLA de resposta e de resolução por prioridade, em quantidade e em %.
+	measure 'HTML Oper Grafico Violacoes SLA' =
+			VAR _p = ADDCOLUMNS (
+			    DATATABLE ( "pr", STRING, "i", INTEGER, { { "CRÍTICA", 0 }, { "ALTA", 1 }, { "MÉDIA", 2 }, { "BAIXA", 3 } } ),
+			    "@vr", VAR _x = [pr] RETURN CALCULATE ( [Violações SLA Resposta], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ),
+			    "@vs", VAR _x = [pr] RETURN CALCULATE ( [Violações SLA Resolução], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ),
+			    "@t", VAR _x = [pr] RETURN CALCULATE ( [Total Chamados], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) ),
+			    "@f", VAR _x = [pr] RETURN CALCULATE ( [Fechados], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) )
+			)
+			VAR _mx = MAX ( COALESCE ( MAXX ( _p, [@vr] ), 0 ), COALESCE ( MAXX ( _p, [@vs] ), 0 ) )
+			VAR _rows = CONCATENATEX (
+			    FILTER ( _p, NOT ISBLANK ( [@t] ) ),
+			    VAR _cy = 112 + [i] * 35
+			    VAR _vr = COALESCE ( [@vr], 0 )
+			    VAR _vs = COALESCE ( [@vs], 0 )
+			    VAR _w1 = DIVIDE ( _vr, _mx ) * 330
+			    VAR _w2 = DIVIDE ( _vs, _mx ) * 330
+			    VAR _y1 = FORMAT ( _cy - 14, "0.0", "en-US" )
+			    VAR _y2 = FORMAT ( _cy + 1, "0.0", "en-US" )
+			    RETURN
+			        "<text x='28' y='" & FORMAT ( _cy + 5, "0.0", "en-US" ) & "' font-size='13.5' font-weight='600' fill='#2B1518'>" & [pr] & "</text>"
+			            & "<rect x='130' y='" & _y1 & "' width='" & FORMAT ( MAX ( _w1, 3 ), "0.0", "en-US" ) & "' height='11' rx='5.5' fill='#C8102E'/>"
+			            & "<rect x='130' y='" & _y2 & "' width='" & FORMAT ( MAX ( _w2, 3 ), "0.0", "en-US" ) & "' height='11' rx='5.5' fill='#F6B9C1'/>"
+			            & "<text x='" & FORMAT ( 130 + _w1 + 10, "0.0", "en-US" ) & "' y='" & FORMAT ( _cy - 4, "0.0", "en-US" ) & "' font-size='12' font-weight='600' fill='#2B1518'>" & FORMAT ( _vr, "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='" & FORMAT ( 130 + _w2 + 10, "0.0", "en-US" ) & "' y='" & FORMAT ( _cy + 10, "0.0", "en-US" ) & "' font-size='12' font-weight='600' fill='#2B1518'>" & FORMAT ( _vs, "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='800' y='" & FORMAT ( _cy + 5, "0.0", "en-US" ) & "' font-size='15' font-weight='700' fill='#2B1518' text-anchor='end'>" & FORMAT ( DIVIDE ( _vr, [@t] ), "0.0%", "pt-BR" ) & "</text>"
+			            & "<text x='954' y='" & FORMAT ( _cy + 5, "0.0", "en-US" ) & "' font-size='15' font-weight='700' fill='#2B1518' text-anchor='end'>" & IF ( COALESCE ( [@f], 0 ) = 0, "—", FORMAT ( DIVIDE ( _vs, [@f] ), "0.0%", "pt-BR" ) ) & "</text>",
+			    "",
+			    [i], ASC
+			)
+			VAR _leg =
+			    "<circle cx='630' cy='34' r='5' fill='#C8102E'/><text x='642' y='38' font-size='13.5' fill='#7D6669'>Resposta (todos)</text>"
+			    & "<circle cx='782' cy='34' r='5' fill='#F6B9C1'/><text x='794' y='38' font-size='13.5' fill='#7D6669'>Resolução (só fechados)</text>"
+			VAR _hd =
+			    "<text x='800' y='92' font-size='11.5' fill='#A8979A' text-anchor='end'>Resposta fora do prazo</text>"
+			    & "<text x='954' y='92' font-size='11.5' fill='#A8979A' text-anchor='end'>Resolução fora do prazo</text>"
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Violações de SLA por prioridade</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Quantos chamados passaram do prazo em cada prioridade</text>"
+			        & _leg & _hd & _rows
+			RETURN
+			    IF ( COALESCE ( _mx, 0 ) = 0, [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "982" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 0151b609-06f2-4efc-b76c-595a79519948
+
+	/// Gráfico estreito (689x246) da página 3: chamados por setor do cliente, divididos entre fechados e backlog.
+	measure 'HTML Oper Grafico Setor' =
+			VAR _c1 = FILTER ( ADDCOLUMNS ( VALUES ( 'dw dim_cliente'[setor] ), "@t", [Total Chamados], "@b", [Backlog] ), NOT ISBLANK ( [@t] ) )
+			VAR _c2 = ADDCOLUMNS ( _c1, "@rn", RANKX ( _c1, 'dw dim_cliente'[setor], , ASC, DENSE ) )
+			VAR _c3 = ADDCOLUMNS ( _c2, "@r", RANKX ( _c2, [@t] * 1000 - [@rn], , DESC, DENSE ) )
+			VAR _nc = COUNTROWS ( _c3 )
+			VAR _mx = COALESCE ( MAXX ( _c3, [@t] ), 1 )
+			VAR _tx0 = 150
+			VAR _tw = 300
+			VAR _rows = CONCATENATEX (
+			    _c3,
+			    VAR _cy = 104 + ( [@r] - 1 ) * 25
+			    VAR _b = COALESCE ( [@b], 0 )
+			    VAR _w = DIVIDE ( [@t], _mx ) * _tw
+			    VAR _wf = DIVIDE ( [@t] - _b, [@t] ) * _w
+			    VAR _yt = FORMAT ( _cy + 5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 8, "0.0", "en-US" )
+			    RETURN
+			        "<text x='" & ( _tx0 - 16 ) & "' y='" & _yt & "' font-size='13.5' font-weight='500' fill='#2B1518' text-anchor='end'>" & UPPER ( 'dw dim_cliente'[setor] ) & "</text>"
+			            & "<clipPath id='k" & [@r] & "'><rect x='" & _tx0 & "' y='" & _yb & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='6'/></clipPath>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & FORMAT ( _w, "0.0", "en-US" ) & "' height='16' rx='6' fill='#C8102E'/>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & FORMAT ( _wf, "0.0", "en-US" ) & "' height='16' fill='#F6B9C1' clip-path='url(#k" & [@r] & ")'/>"
+			            & "<text x='" & FORMAT ( _tx0 + _w + 12, "0.0", "en-US" ) & "' y='" & _yt & "' font-size='14' font-weight='700' fill='#2B1518'>" & FORMAT ( [@t], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12.5' fill='#7D6669' text-anchor='end'>" & FORMAT ( DIVIDE ( _b, [@t] ), "0.0%", "pt-BR" ) & " em backlog</text>",
+			    "",
+			    [@r], ASC
+			)
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Chamados por setor do cliente</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Volume por setor, entre fechados e em backlog</text>"
+			        & "<circle cx='489' cy='34' r='5' fill='#F6B9C1'/><text x='501' y='38' font-size='13.5' fill='#7D6669'>Fechados</text>"
+			        & "<circle cx='581' cy='34' r='5' fill='#C8102E'/><text x='593' y='38' font-size='13.5' fill='#7D6669'>Backlog</text>"
+			        & _rows
+			RETURN
+			    IF ( _nc = 0, [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "689" ), "@H", "246" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 34e9e612-bcef-4387-a12d-3a0277c231f2
+
+	/// Gráfico largo (982x190) da página 3: tempo médio de resposta por prioridade comparado com a meta (1/2/4/8 h).
+	measure 'HTML Oper Grafico Resposta Meta' =
+			VAR _p = ADDCOLUMNS (
+			    DATATABLE ( "pr", STRING, "i", INTEGER, "meta", INTEGER, { { "CRÍTICA", 0, 1 }, { "ALTA", 1, 2 }, { "MÉDIA", 2, 4 }, { "BAIXA", 3, 8 } } ),
+			    "@a", VAR _x = [pr] RETURN CALCULATE ( [Oper Resposta Media], KEEPFILTERS ( 'dw fato_chamados'[prioridade] = _x ) )
+			)
+			VAR _ym = MAX ( MAXX ( _p, [meta] ), COALESCE ( MAXX ( _p, [@a] ), 0 ) )
+			VAR _base = 138
+			VAR _bh = 48
+			VAR _g = CONCATENATEX (
+			    FILTER ( _p, NOT ISBLANK ( [@a] ) ),
+			    VAR _cx = 28 + [i] * 232 + 116
+			    VAR _a = [@a]
+			    VAR _m = [meta]
+			    VAR _ha = MAX ( DIVIDE ( _a, _ym ) * _bh, 3 )
+			    VAR _ym2 = _base - DIVIDE ( _m, _ym ) * _bh
+			    VAR _fora = _a > _m
+			    RETURN
+			        "<rect x='" & FORMAT ( _cx - 30, "0.0", "en-US" ) & "' y='" & ( _base - _bh ) & "' width='60' height='" & _bh & "' rx='7' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='" & FORMAT ( _cx - 30, "0.0", "en-US" ) & "' y='" & FORMAT ( _base - _ha, "0.0", "en-US" ) & "' width='60' height='" & FORMAT ( _ha, "0.0", "en-US" ) & "' rx='7' fill='#C8102E'/>"
+			            & "<line x1='" & FORMAT ( _cx - 40, "0.0", "en-US" ) & "' y1='" & FORMAT ( _ym2, "0.0", "en-US" ) & "' x2='" & FORMAT ( _cx + 40, "0.0", "en-US" ) & "' y2='" & FORMAT ( _ym2, "0.0", "en-US" ) & "' stroke='#2B1518' stroke-width='2' stroke-dasharray='5 4'/>"
+			            & "<text x='" & FORMAT ( _cx + 48, "0.0", "en-US" ) & "' y='" & FORMAT ( _base - _bh / 2 + 5, "0.0", "en-US" ) & "' font-size='13' font-weight='" & IF ( _fora, "700", "500" ) & "' fill='" & IF ( _fora, "#C8102E", "#7D6669" ) & "'>" & IF ( _fora, FORMAT ( DIVIDE ( _a, _m ), "0.0", "pt-BR" ) & "× a meta", "dentro da meta" ) & "</text>"
+			            & "<text x='" & FORMAT ( _cx, "0.0", "en-US" ) & "' y='" & ( _base + 20 ) & "' font-size='14' font-weight='600' fill='#2B1518' text-anchor='middle'>" & [pr] & "</text>"
+			            & "<text x='" & FORMAT ( _cx, "0.0", "en-US" ) & "' y='" & ( _base + 37 ) & "' font-size='12.5' fill='#7D6669' text-anchor='middle'><tspan font-weight='700' fill='#2B1518'>" & FORMAT ( _a, "0.0", "pt-BR" ) & " h</tspan> · meta " & _m & " h</text>",
+			    "",
+			    [i], ASC
+			)
+			VAR _leg =
+			    "<circle cx='560' cy='34' r='5' fill='#C8102E'/><text x='572' y='38' font-size='13.5' fill='#7D6669'>Tempo médio de resposta</text>"
+			    & "<line x1='752' y1='34' x2='768' y2='34' stroke='#2B1518' stroke-width='2' stroke-dasharray='5 4'/><text x='776' y='38' font-size='13.5' fill='#7D6669'>Meta da prioridade</text>"
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Resposta x meta por prioridade</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Tempo médio de resposta em horas, comparado com a meta de cada prioridade</text>"
+			        & _leg & _g
+			RETURN
+			    IF ( ISBLANK ( MAXX ( _p, [@a] ) ), [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "982" ), "@H", "190" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: a63065ba-d4f3-4e6c-aeac-a33d6f421ef1
+
+	/// Gráfico estreito (689x190) da página 3: 5 clientes com mais chamados em backlog.
+	measure 'HTML Oper Grafico Clientes Backlog' =
+			VAR _c1 = FILTER ( ADDCOLUMNS ( VALUES ( 'dw dim_cliente'[nome_cliente] ), "@b", [Backlog], "@t", [Total Chamados] ), NOT ISBLANK ( [@b] ) )
+			VAR _top = TOPN ( 5, _c1, [@b], DESC, 'dw dim_cliente'[nome_cliente], ASC )
+			VAR _c3 = ADDCOLUMNS ( _top, "@r", VAR _x = [@b] VAR _n = 'dw dim_cliente'[nome_cliente] RETURN COUNTROWS ( FILTER ( _top, [@b] > _x || ( [@b] = _x && 'dw dim_cliente'[nome_cliente] < _n ) ) ) + 1 )
+			VAR _nc = COUNTROWS ( _c3 )
+			VAR _mx = COALESCE ( MAXX ( _c3, [@b] ), 1 )
+			VAR _tx0 = 190
+			VAR _tw = 260
+			VAR _rows = CONCATENATEX (
+			    _c3,
+			    VAR _cy = 88 + ( [@r] - 1 ) * 22
+			    VAR _w = DIVIDE ( [@b], _mx ) * _tw
+			    VAR _yt = FORMAT ( _cy + 4.5, "0.0", "en-US" )
+			    VAR _yb = FORMAT ( _cy - 6, "0.0", "en-US" )
+			    RETURN
+			        "<text x='174' y='" & _yt & "' font-size='12.5' font-weight='500' fill='#2B1518' text-anchor='end'>" & UPPER ( 'dw dim_cliente'[nome_cliente] ) & "</text>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & _tw & "' height='12' rx='6' fill='#8E1B2A' fill-opacity='.09'/>"
+			            & "<rect x='" & _tx0 & "' y='" & _yb & "' width='" & FORMAT ( MAX ( _w, 6 ), "0.0", "en-US" ) & "' height='12' rx='6' fill='#C8102E'/>"
+			            & "<text x='" & FORMAT ( _tx0 + _w + 10, "0.0", "en-US" ) & "' y='" & _yt & "' font-size='12.5' font-weight='700' fill='#2B1518'>" & FORMAT ( [@b], "#,0", "pt-BR" ) & "</text>"
+			            & "<text x='661' y='" & _yt & "' font-size='12' fill='#7D6669' text-anchor='end'>" & FORMAT ( DIVIDE ( [@b], [@t] ), "0.0%", "pt-BR" ) & " em backlog</text>",
+			    "",
+			    [@r], ASC
+			)
+			VAR _svg =
+			    "<text x='28' y='40' font-size='21' font-weight='600' fill='#2B1518'>Clientes com mais backlog</text>"
+			        & "<text x='28' y='64' font-size='14.5' fill='#7D6669'>Os 5 clientes com mais chamados em aberto · % de cada cliente em backlog</text>"
+			        & _rows
+			RETURN
+			    IF ( _nc = 0, [Oper Grafico Vazio], SUBSTITUTE ( SUBSTITUTE ( SUBSTITUTE ( [Oper Moldura Grafico], "@W", "689" ), "@H", "190" ), "@C", _svg ) )
+		displayFolder: Página 3 - Operacional
+		lineageTag: 37deb019-7984-4110-a796-e670fad8364a
+
+	measure 'Oper Backlog por Faixa' =
+			VAR _ref = [Oper Data Referencia]
+			VAR _lo = SELECTEDVALUE ( 'Faixa Idade'[Min] )
+			VAR _hi = SELECTEDVALUE ( 'Faixa Idade'[Max] )
+			RETURN
+			    IF (
+			        ISBLANK ( _lo ),
+			        [Backlog],
+			        CALCULATE ( [Backlog], KEEPFILTERS ( 'dw fato_chamados'[data_abertura] >= _ref - _hi && 'dw fato_chamados'[data_abertura] < _ref - _lo + 1 ) )
+			    )
+		formatString: #,0
+		displayFolder: Página 3 - Operacional\Nativo
+		lineageTag: d870d9fc-3a09-4612-8717-5e7323a34ee3
+
+	measure 'Oper Urgente por Faixa' =
+			VAR _ref = [Oper Data Referencia]
+			VAR _lo = SELECTEDVALUE ( 'Faixa Idade'[Min] )
+			VAR _hi = SELECTEDVALUE ( 'Faixa Idade'[Max] )
+			RETURN
+			    IF (
+			        ISBLANK ( _lo ),
+			        [Oper Backlog Urgente],
+			        CALCULATE ( [Oper Backlog Urgente], KEEPFILTERS ( 'dw fato_chamados'[data_abertura] >= _ref - _hi && 'dw fato_chamados'[data_abertura] < _ref - _lo + 1 ) )
+			    )
+		formatString: #,0
+		displayFolder: Página 3 - Operacional\Nativo
+		lineageTag: 18f41be4-bbf6-440d-b8ab-29a9215c0a7a
+
+	measure 'Oper Meta Resposta (h)' = SWITCH ( SELECTEDVALUE ( 'Ordem Prioridade'[Prioridade] ), "CRÍTICA", 1, "ALTA", 2, "MÉDIA", 4, "BAIXA", 8 )
+		formatString: 0
+		displayFolder: Página 3 - Operacional\Nativo
+		lineageTag: 5ad7e52d-1dde-4b2a-b7d5-cbb7f34f3a14
+
+	measure 'Oper Backlog Top 5 Clientes' =
+			VAR _b = [Backlog]
+			VAR _r = RANKX ( ALLSELECTED ( 'dw dim_cliente'[nome_cliente] ), [Backlog], , DESC, SKIP )
+			RETURN IF ( NOT ISBLANK ( _b ) && _r <= 5, _b )
+		formatString: #,0
+		displayFolder: Página 3 - Operacional\Nativo
+		lineageTag: 25115fe4-3681-44c1-a976-d566a0575c0d
+
+	measure 'Equipe Chamados Top 6' = VAR _v=[Total Chamados] VAR _r=RANKX(ALLSELECTED('dw dim_analista'[Analista Rotulo]),[Total Chamados],,DESC,SKIP) RETURN IF(NOT ISBLANK(_v) && _r<=6,_v)
+		formatString: #,0
+		displayFolder: Página 2 - Equipe\Nativo
+		lineageTag: 8e7b61b2-3c53-488c-8baf-832cac1fcab0
+
+	measure 'Equipe Analistas no Quadrante' =
+			VAR _c = SELECTEDVALUE ( 'Quadrante Carga'[Ordem] )
+			VAR _m = SELECTEDVALUE ( 'Quadrante MTTR'[Ordem] )
+			VAR _t = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( 'dw dim_analista'[id_analista] ), "@v", [Total Chamados], "@m", [MTTR] ), REMOVEFILTERS ( 'dw dim_analista' ) )
+			VAR _f = FILTER ( _t, NOT ISBLANK ( [@v] ) && NOT ISBLANK ( [@m] ) )
+			VAR _avg = AVERAGEX ( _f, [@v] )
+			VAR _eq = [MTTR Equipe]
+			VAR _q = FILTER ( _f, ( ISBLANK ( _c ) || IF ( _c = 1, [@v] < _avg, [@v] >= _avg ) ) && ( ISBLANK ( _m ) || IF ( _m = 1, [@m] < _eq, [@m] >= _eq ) ) )
+			RETURN IF ( ISBLANK ( _avg ), BLANK (), COUNTROWS ( _q ) + 0 )
+		formatString: 0
+		displayFolder: Página 2 - Equipe\Nativo
+		lineageTag: ecad2058-7c0d-47a1-964b-5e8dc8c4eadd
+
+	/// Texto '● 70,9%' para a tabela de países (bolinha + % SLA de resolução).
+	measure 'Nativo SLA Resolucao Texto' =
+			VAR _s = [% SLA Resolucao]
+			RETURN IF ( ISBLANK ( _s ), BLANK (), UNICHAR ( 9679 ) & "  " & FORMAT ( _s, "0.0%", "pt-BR" ) )
+		displayFolder: Nativo
+		lineageTag: 18123dbf-f794-4dce-922e-2b60fcd2b27e
+
+	/// Cor do SLA de resolução na tabela de países: verde >= 68%, amarelo entre 63% e 68%, vermelho < 63%.
+	measure 'Nativo Cor SLA Resolucao' =
+			VAR _s = [% SLA Resolucao]
+			RETURN SWITCH ( TRUE (), ISBLANK ( _s ), BLANK (), _s >= 0.68, "#2E8B57", _s < 0.63, "#C8102E", "#B8860B" )
+		displayFolder: Nativo
+		lineageTag: d652d4cb-4ef5-4ca9-b9d5-376bb1837f98
+
+	/// Total de chamados no centro da rosca 'Chamados por status' (ex.: 283,8 mil / chamados).
+	measure 'Nativo HTML Total Rosca' =
+			VAR _v = [Total Chamados]
+			VAR _txt = IF ( ISBLANK ( _v ), "—", FORMAT ( _v / 1000, "0.0", "pt-BR" ) & " mil" )
+			RETURN
+			    "<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+			    .c{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Segoe UI',Arial,sans-serif;}
+			    .v{color:#2B1518;font-weight:700;font-size:clamp(14px,34vh,24px);line-height:1.05;white-space:nowrap;}
+			    .l{color:#7D6669;font-size:clamp(9px,16vh,12px);white-space:nowrap;}</style>"
+			        & "<div class='c'><div class='v'>" & _txt & "</div><div class='l'>chamados</div></div>"
+		displayFolder: Nativo
+		lineageTag: c1ed2654-6496-4e88-9f95-46977d77d4bc
+
+	/// Cor das colunas de 'Chamados por país': vermelho no país com mais chamados, rosa nos demais.
+	measure 'Nativo Cor Pais Destaque' =
+			VAR _t = [Total Chamados]
+			VAR _max = MAXX ( ALLSELECTED ( 'dw dim_pais'[nome_pais] ), [Total Chamados] )
+			RETURN IF ( NOT ISBLANK ( _t ) && _t = _max, "#C8102E", "#F6B9C1" )
+		displayFolder: Nativo
+		lineageTag: 33e01466-b783-4fc2-aaa7-f226dab763d9
+
+	/// Backlog em MILHARES para o gráfico 'Backlog por categoria'. O formato dinâmico mostra valor e % do total (ex.: 10,3 mil (29,6%)).
+	measure 'Nativo Backlog Categoria' = DIVIDE ( [Backlog], 1000 )
+		displayFolder: Nativo
+		lineageTag: 4904a9f1-83a4-4585-a588-f54a0f1a6fe7
+
+		formatStringDefinition =
+				VAR _b = [Backlog]
+				VAR _tot = CALCULATE ( [Backlog], ALLSELECTED ( 'dw fato_chamados'[categoria] ) )
+				VAR _p = DIVIDE ( _b, _tot )
+				RETURN "#,0.0"" mil (" & FORMAT ( _p, "0.0%", "pt-BR" ) & ")"""
+
+	/// Cor das colunas de 'Backlog por categoria': vermelho na maior, rosa nas demais.
+	measure 'Nativo Cor Categoria Destaque' =
+			VAR _b = [Backlog]
+			VAR _max = MAXX ( ALLSELECTED ( 'dw fato_chamados'[categoria] ), [Backlog] )
+			RETURN IF ( NOT ISBLANK ( _b ) && _b = _max, "#C8102E", "#F6B9C1" )
+		displayFolder: Nativo
+		lineageTag: 29e1c5a9-7ffc-43ec-bd18-ede7633865a6
+
+	/// Ranking (pirulito) dos 5 clientes com mais backlog, respeitando os filtros. Usado no visual HTML da página Análise Operacional.
+	measure 'Nativo HTML Top 5 Clientes Backlog' =
+			VAR _t =
+			    TOPN ( 5, FILTER ( ADDCOLUMNS ( VALUES ( 'dw dim_cliente'[nome_cliente] ), "@b", [Backlog] ), NOT ISBLANK ( [@b] ) ), [@b], DESC )
+			VAR _r = ADDCOLUMNS ( _t, "@r", RANKX ( _t, [@b], , DESC, DENSE ) )
+			VAR _mx = MAXX ( _t, [@b] )
+			VAR _linhas =
+			    CONCATENATEX (
+			        _r,
+			        VAR _pos = [@r]
+			        VAR _w = DIVIDE ( [@b], _mx ) * 100
+			        VAR _first = _pos = 1
+			        VAR _cb = IF ( _first, "#C8102E", "#F6B9C1" )
+			        VAR _ct = IF ( _first, "#FFFFFF", "#2B1518" )
+			        VAR _cl = IF ( _first, "#C8102E", "#F08A97" )
+			        RETURN
+			            "<div class='r'><div class='n' style='background:" & _cb & ";color:" & _ct & "'>" & _pos & "</div>"
+			                & "<div class='nm'>" & [nome_cliente] & "</div>"
+			                & "<div class='tr'><div class='ln' style='width:" & FORMAT ( _w * 0.97, "0.0", "en-US" ) & "%;background:" & _cl & "'><span class='dt' style='background:" & _cl & "'></span></div></div>"
+			                & "<div class='v'>" & FORMAT ( [@b], "#,0", "pt-BR" ) & "</div></div>",
+			        "",
+			        [@b], DESC
+			    )
+			VAR _css =
+			    "<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+			    .w{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-around;padding:2px 8px 4px 4px;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+			    .r{display:flex;align-items:center;gap:10px;}
+			    .n{flex:0 0 auto;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;}
+			    .nm{flex:0 0 30%;color:#2B1518;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+			    .tr{flex:1;position:relative;height:12px;}
+			    .ln{position:absolute;left:0;top:50%;height:3px;transform:translateY(-50%);border-radius:2px;}
+			    .dt{position:absolute;right:-5px;top:50%;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);}
+			    .v{flex:0 0 auto;min-width:46px;text-align:right;font-weight:700;color:#2B1518;font-size:12px;}</style>"
+			RETURN IF ( ISBLANK ( _mx ), BLANK (), _css & "<div class='w'>" & _linhas & "</div>" )
+		displayFolder: Nativo
+		lineageTag: 0a0910ee-9aeb-4a95-8fa5-baa5fb2c6c45
+
+	/// Backlog da faixa que NÃO é Crítica/Alta (backlog da faixa menos urgentes). Usado no gráfico de envelhecimento.
+	measure 'Nativo Backlog Demais por Faixa' =
+			VAR _d = [Oper Backlog por Faixa] - [Oper Urgente por Faixa]
+			RETURN IF ( ISBLANK ( [Oper Backlog por Faixa] ), BLANK (), _d )
+		formatString: #,0
+		displayFolder: Nativo
+		lineageTag: e0c7ab9e-f557-4e05-af79-9f2a29ee9d94
+
+	/// Total do backlog da faixa; o formato dinâmico mostra valor e % do backlog (ex.: 30.712 (88,7%)). Usado como linha invisível só para o rótulo no gráfico de envelhecimento.
+	measure 'Nativo Backlog Faixa Rotulo' = [Oper Backlog por Faixa]
+		displayFolder: Nativo
+		lineageTag: 4c422122-a1d2-408c-b44e-14fd80e91e7c
+
+		formatStringDefinition =
+				VAR _p = DIVIDE ( [Oper Backlog por Faixa], CALCULATE ( [Oper Backlog por Faixa], REMOVEFILTERS ( 'Faixa Idade' ) ) )
+				RETURN "#,0"" (" & FORMAT ( _p, "0.0%", "pt-BR" ) & ")"""
+
+	/// Gráfico de pirulito do MTTR por nível com linha tracejada da média da equipe. Respeita os filtros.
+	measure 'Nativo HTML MTTR por Nivel' =
+			VAR _t = FILTER ( ADDCOLUMNS ( VALUES ( 'dw dim_analista'[nivel] ), "@m", [MTTR] ), NOT ISBLANK ( [@m] ) )
+			VAR _media = CALCULATE ( [MTTR], REMOVEFILTERS ( 'dw dim_analista'[nivel] ) )
+			VAR _escala = MAX ( MAXX ( _t, [@m] ), _media ) * 1.12
+			VAR _r = ADDCOLUMNS ( _t, "@r", RANKX ( _t, [@m], , DESC, DENSE ) )
+			VAR _pm = FORMAT ( DIVIDE ( _media, _escala ) * 100, "0.0", "en-US" )
+			VAR _linhas =
+			    CONCATENATEX (
+			        _r,
+			        VAR _c = SWITCH ( [@r], 1, "#C8102E", 2, "#F08A97", "#F6B9C1" )
+			        VAR _p = FORMAT ( DIVIDE ( [@m], _escala ) * 100, "0.0", "en-US" )
+			        RETURN
+			            "<div class='r'><div class='nm'>" & [nivel] & "</div><div class='tk'>"
+			                & "<div class='ln' style='width:" & _p & "%;background:" & _c & "'></div>"
+			                & "<div class='dt' style='left:" & _p & "%;background:" & _c & "'></div>"
+			                & "<div class='v' style='left:" & _p & "%'>" & FORMAT ( [@m], "0.0", "pt-BR" ) & " h</div>"
+			                & "</div></div>",
+			        "",
+			        [@m], DESC
+			    )
+			VAR _css =
+			    "<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+			    .w{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-evenly;padding:18px 70px 6px 10px;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+			    .r{display:flex;align-items:center;}
+			    .nm{flex:0 0 80px;color:#2B1518;font-size:12px;}
+			    .tk{position:relative;flex:1;height:16px;}
+			    .ln{position:absolute;left:0;top:50%;height:4px;transform:translateY(-50%);border-radius:2px;}
+			    .dt{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);}
+			    .v{position:absolute;top:50%;transform:translate(14px,-50%);font-weight:700;color:#2B1518;font-size:12px;white-space:nowrap;}
+			    .avg{position:absolute;top:14px;bottom:4px;border-left:1.5px dashed #7D6669;}
+			    .avgt{position:absolute;top:0;transform:translateX(-100%);padding-right:6px;color:#7D6669;font-size:10px;white-space:nowrap;}</style>"
+			VAR _avg =
+			    "<div class='avg' style='left:calc(90px + (100% - 160px) * " & _pm & " / 100)'></div>"
+			        & "<div class='avgt' style='left:calc(90px + (100% - 160px) * " & _pm & " / 100)'>média da equipe " & FORMAT ( _media, "0.0", "pt-BR" ) & " h</div>"
+			RETURN IF ( ISBLANK ( _media ), BLANK (), _css & "<div class='w'>" & _avg & _linhas & "</div>" )
+		displayFolder: Nativo
+		lineageTag: 092a721c-6806-403c-8ff8-4188ee8ce343
+
+	/// Cor de fundo do mapa de calor de SLA (resposta): quanto maior o %, mais forte o vermelho.
+	measure 'Nativo Cor Fundo SLA Resposta' =
+			VAR _v = [% SLA Resposta]
+			RETURN SWITCH ( TRUE (), ISBLANK ( _v ), BLANK (), _v < 0.45, "#FBE1E5", _v < 0.55, "#F6B9C1", _v < 0.62, "#F08A97", _v < 0.66, "#DC4B5F", "#C8102E" )
+		displayFolder: Nativo
+		lineageTag: dbafbe20-06f3-40f2-a5d5-d7ae14215a84
+
+	/// Cor de fundo do mapa de calor de SLA (resolução): quanto maior o %, mais forte o vermelho.
+	measure 'Nativo Cor Fundo SLA Resolucao' =
+			VAR _v = [% SLA Resolucao]
+			RETURN SWITCH ( TRUE (), ISBLANK ( _v ), BLANK (), _v < 0.45, "#FBE1E5", _v < 0.55, "#F6B9C1", _v < 0.62, "#F08A97", _v < 0.66, "#DC4B5F", "#C8102E" )
+		displayFolder: Nativo
+		lineageTag: 38512150-eacf-4a5b-8e65-dbb56d50b490
+
+	/// Cor do número no mapa de calor (resposta): branco no fundo escuro, escuro no fundo claro.
+	measure 'Nativo Cor Texto SLA Resposta' =
+			VAR _v = [% SLA Resposta]
+			RETURN IF ( ISBLANK ( _v ), BLANK (), IF ( _v >= 0.62, "#FFFFFF", "#2B1518" ) )
+		displayFolder: Nativo
+		lineageTag: ab2537b2-2f74-4a88-aa1f-ebc72ef53854
+
+	/// Cor do número no mapa de calor (resolução): branco no fundo escuro, escuro no fundo claro.
+	measure 'Nativo Cor Texto SLA Resolucao' =
+			VAR _v = [% SLA Resolucao]
+			RETURN IF ( ISBLANK ( _v ), BLANK (), IF ( _v >= 0.62, "#FFFFFF", "#2B1518" ) )
+		displayFolder: Nativo
+		lineageTag: 6d5a7903-f537-41d4-a798-7c73dfce1042
+
+	column 'Coluna 1'
+		dataType: string
+		isHidden
+		lineageTag: de0eefcb-b5fd-474a-9c2b-7d6411767a29
+		summarizeBy: none
+		sourceColumn: Coluna 1
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Medidas = m
+		mode: import
+		source =
+				let
+				    Fonte = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [#"Coluna 1" = _t]),
+				    #"Tipo Alterado" = Table.TransformColumnTypes(Fonte,{{"Coluna 1", type text}})
+				in
+				    #"Tipo Alterado"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navegação
+

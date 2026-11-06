@@ -1,0 +1,20 @@
+/// Colunas da matriz Carga x MTTR (Página 2 nativa)
+table 'Quadrante Carga'
+	lineageTag: 8b7a081c-ab45-4598-89ac-1dc16b45877a
+
+	column Carga
+		lineageTag: 8a597df7-075b-4f08-b5d4-37b9c2a8448c
+		isNameInferred
+		sourceColumn: [Carga]
+		sortByColumn: Ordem
+
+	column Ordem
+		isHidden
+		lineageTag: 7319cee4-fdca-44c3-8306-a5c84f0e9c03
+		isNameInferred
+		sourceColumn: [Ordem]
+
+	partition 'Quadrante Carga' = calculated
+		mode: import
+		source = DATATABLE ( "Carga", STRING, "Ordem", INTEGER, { { "Carga abaixo da média", 1 }, { "Carga acima da média", 2 } } )
+

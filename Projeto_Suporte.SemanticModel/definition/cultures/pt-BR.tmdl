@@ -1,0 +1,549 @@
+cultureInfo pt-BR
+
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "dw_dim_pais.nome_pais": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_pais",
+			          "ConceptualProperty": "nome_pais"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "País": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_calendario.nome_mes": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_calendario",
+			          "ConceptualProperty": "nome_mes"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Mês": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_analista.nome": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_analista",
+			          "ConceptualProperty": "nome"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Analista": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_analista.nivel": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_analista",
+			          "ConceptualProperty": "nivel"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Nível": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_cliente.nome_cliente": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_cliente",
+			          "ConceptualProperty": "nome_cliente"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Cliente": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_cliente.setor": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_cliente",
+			          "ConceptualProperty": "setor"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Setor": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_analista.analista_rotulo": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_analista",
+			          "ConceptualProperty": "Analista Rotulo"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Analista": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.total_chamados": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Total Chamados"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Abertos": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
+			        {
+			          "Chamados": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.fechados_no_período": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Fechados no Período"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Fechados": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.sla_resposta": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "% SLA Resposta"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "SLA resposta": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.sla_resolucao": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "% SLA Resolucao"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "SLA resolução": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.equipe_analistas_no_quadrante": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Equipe Analistas no Quadrante"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Analistas": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.equipe_chamados_top_6": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Equipe Chamados Top 6"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Chamados": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.oper_resposta_media": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Oper Resposta Media"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Resposta média (h)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.oper_meta_resposta_h": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Oper Meta Resposta (h)"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Meta (h)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.oper_backlog_top_5_clientes": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Oper Backlog Top 5 Clientes"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_medidas.oper_backlog_por_faixa": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Oper Backlog por Faixa"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_medidas.oper_urgente_por_faixa": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Oper Urgente por Faixa"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Crítica + Alta": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.violações_sla_resposta": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Violações SLA Resposta"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Resposta": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.violações_sla_resolução": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Violações SLA Resolução"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Resolução": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_fato_chamados.status": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw fato_chamados",
+			          "ConceptualProperty": "status"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Status": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_fato_chamados.categoria": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw fato_chamados",
+			          "ConceptualProperty": "categoria"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Categoria": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "dw_dim_calendario.mes_ano": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "dw dim_calendario",
+			          "ConceptualProperty": "mes_ano"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_medidas.backlog": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Backlog"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_medidas.nativo_sla_resolucao_texto": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Nativo SLA Resolucao Texto"
+			        }
+			      },
+			      "State": "Generated"
+			    },
+			    "table_medidas.nativo_backlog_categoria": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Nativo Backlog Categoria"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Backlog (mil)": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.nativo_backlog_demais_por_faixa": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Nativo Backlog Demais por Faixa"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Demais": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    },
+			    "table_medidas.nativo_backlog_faixa_rotulo": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "_Medidas",
+			          "ConceptualProperty": "Nativo Backlog Faixa Rotulo"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Total": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

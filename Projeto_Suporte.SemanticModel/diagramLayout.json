@@ -1,0 +1,187 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 1200,
+        "y": 25
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 4340.7661000293883,
+            "y": 85.246277694900073
+          },
+          "nodeIndex": "_Medidas",
+          "nodeLineageTag": "ede66f83-0dd6-41a5-a562-a530e9a55ee9",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 4002.1491500440816,
+            "y": 191.94040524509242
+          },
+          "nodeIndex": "dw dim_analista",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 4273.1491500440816,
+            "y": 357.78510320493854
+          },
+          "nodeIndex": "dw dim_calendario",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 3670.7661000293879,
+            "y": 249.92551602469339
+          },
+          "nodeIndex": "dw dim_cliente",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 3882.967661222573,
+            "y": 495.78510320493854
+          },
+          "nodeIndex": "dw fato_chamados",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 618.38305001469394,
+            "y": 236.52685736521909
+          },
+          "nodeIndex": "dw dim_pais",
+          "nodeLineageTag": "845654ac-d8a2-447e-8bfb-48119f645362",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 242.51196814481935
+          },
+          "nodeIndex": "dw dim_supervisor",
+          "nodeLineageTag": "36d2c643-b9f3-4d4e-a8f9-13322b7af85e",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 334.2015611931854,
+            "y": 281.37155532506472
+          },
+          "nodeIndex": "dw supervisor_pais",
+          "nodeLineageTag": "5600f8a0-72c2-42b8-9dfd-2961dc678f40",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 852.38305001469416,
+            "y": 301.51941275501923
+          },
+          "nodeIndex": "Faixa Idade",
+          "nodeLineageTag": "456125d9-fc7e-4a61-a7cc-72dfecaeffa8",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1136.3830500146942,
+            "y": 337.51941275501923
+          },
+          "nodeIndex": "Filtro Rapido de Data",
+          "nodeLineageTag": "8b0803d4-50df-438d-bfd3-4e6c376a2c9b",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1420.3830500146942,
+            "y": 325.51941275501923
+          },
+          "nodeIndex": "Ordem Prioridade",
+          "nodeLineageTag": "0503dfe6-363d-44ae-8ae2-c5ba9c85714f",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1704.3830500146942,
+            "y": 325.51941275501923
+          },
+          "nodeIndex": "Quadrante Carga",
+          "nodeLineageTag": "8b7a081c-ab45-4598-89ac-1dc16b45877a",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1988.3830500146942,
+            "y": 325.51941275501923
+          },
+          "nodeIndex": "Quadrante MTTR",
+          "nodeLineageTag": "eeccc83d-d0a0-44ee-bba8-c1b5f11356b6",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Todas as tabelas",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Todas as tabelas",
+  "defaultDiagram": "Todas as tabelas"
+}

@@ -1,0 +1,413 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "7d1f15e05127ed13cd08",
+  "position": {
+    "x": 1237.1428571428571,
+    "y": 38.571428571428577,
+    "z": 12000,
+    "height": 328.57142857142861,
+    "width": 627.14285714285722,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "smartFilterBarSDKA9F7BD62E04ADCE9DD7450D052A5DB60",
+    "query": {
+      "queryState": {
+        "fields": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dw dim_analista"
+                    }
+                  },
+                  "Property": "nome"
+                }
+              },
+              "queryRef": "dw dim_analista.nome",
+              "nativeQueryRef": "Analista",
+              "displayName": "Analista"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dw dim_analista"
+                    }
+                  },
+                  "Property": "nivel"
+                }
+              },
+              "queryRef": "dw dim_analista.nivel",
+              "nativeQueryRef": "Nível",
+              "displayName": "Nível"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dw dim_calendario"
+                    }
+                  },
+                  "Property": "Ano"
+                }
+              },
+              "queryRef": "dw dim_calendario.Ano",
+              "nativeQueryRef": "Ano"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dw dim_calendario"
+                    }
+                  },
+                  "Property": "nome_mes"
+                }
+              },
+              "queryRef": "dw dim_calendario.nome_mes",
+              "nativeQueryRef": "Mês",
+              "displayName": "Mês"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dw dim_pais"
+                    }
+                  },
+                  "Property": "nome_pais"
+                }
+              },
+              "queryRef": "dw dim_pais.nome_pais",
+              "nativeQueryRef": "País",
+              "displayName": "País"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "configDarkMode": [
+        {
+          "properties": {
+            "darkMode": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "corBordaDark": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 2,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "bgDark": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#0A1226'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "configGeral": [
+        {
+          "properties": {
+            "sortMode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'az'"
+                }
+              }
+            },
+            "showShadow": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "showSort": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "showResetBtn": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "numFiltrosPrincipais": {
+              "expr": {
+                "Literal": {
+                  "Value": "5D"
+                }
+              }
+            },
+            "selecaoUnica": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "corAccent": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "bgBar": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#E6DEDE'"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "configBotoes": [
+        {
+          "properties": {
+            "borderRadiusBotao": {
+              "expr": {
+                "Literal": {
+                  "Value": "6D"
+                }
+              }
+            },
+            "corTextoBotao": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "corBordaBtn": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#FF0014'"
+                    }
+                  }
+                }
+              }
+            },
+            "bgBotao": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {}
+        }
+      ],
+      "configBorda": [
+        {
+          "properties": {
+            "showBorda": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "corBorda": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 9,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "larguraBorda": {
+              "expr": {
+                "Literal": {
+                  "Value": "4D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "configTexto": [
+        {
+          "properties": {
+            "tamanhoFonte": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            },
+            "corTexto": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "corTextoSec": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "configCheckbox": [
+        {
+          "properties": {
+            "corCheckAtivo": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 3,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "corHover": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "visualHeader": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

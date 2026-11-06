@@ -1,0 +1,20 @@
+/// Prioridades na ordem Crítica > Baixa para os eixos dos gráficos nativos
+table 'Ordem Prioridade'
+	lineageTag: 0503dfe6-363d-44ae-8ae2-c5ba9c85714f
+
+	column Prioridade
+		lineageTag: 1a6632a0-73e2-4a06-b4fd-dcc3e2f2faa4
+		isNameInferred
+		sourceColumn: [Prioridade]
+		sortByColumn: Ordem
+
+	column Ordem
+		isHidden
+		lineageTag: c10f5ea8-525b-4736-90db-c73e4297c363
+		isNameInferred
+		sourceColumn: [Ordem]
+
+	partition 'Ordem Prioridade' = calculated
+		mode: import
+		source = DATATABLE ( "Prioridade", STRING, "Ordem", INTEGER, { { "CRÍTICA", 1 }, { "ALTA", 2 }, { "MÉDIA", 3 }, { "BAIXA", 4 } } )
+

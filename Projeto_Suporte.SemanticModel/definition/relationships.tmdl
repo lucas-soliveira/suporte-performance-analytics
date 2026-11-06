@@ -1,0 +1,43 @@
+relationship a7602b2d-0d3c-4f87-bc6f-f3b0f39a0c96
+	fromColumn: 'dw fato_chamados'.id_analista
+	toColumn: 'dw dim_analista'.id_analista
+
+	annotation PBI_IsFromSource = FS
+
+relationship 2d1c948a-185d-415b-a691-38257c0ae6c1
+	fromColumn: 'dw fato_chamados'.id_cliente
+	toColumn: 'dw dim_cliente'.id_cliente
+
+	annotation PBI_IsFromSource = FS
+
+relationship eef9374e-42b9-b1fd-0fba-e6f476cb9227
+	fromColumn: 'dw fato_chamados'.id_data_abertura
+	toColumn: 'dw dim_calendario'.id_data
+
+relationship d0df774f-6193-9a23-d2c8-4df9ec99d8c0
+	isActive: false
+	fromColumn: 'dw fato_chamados'.id_data_fechamento
+	toColumn: 'dw dim_calendario'.id_data
+
+relationship 67bbb295-1e63-4026-9f8b-8e8e866358fc
+	fromColumn: 'dw supervisor_pais'.id_supervisor
+	toColumn: 'dw dim_supervisor'.id_supervisor
+
+	annotation PBI_IsFromSource = FS
+
+relationship dbfcd57c-0bfe-46e7-9528-0f4783741a15
+	crossFilteringBehavior: bothDirections
+	securityFilteringBehavior: bothDirections
+	fromColumn: 'dw supervisor_pais'.id_pais
+	toColumn: 'dw dim_pais'.id_pais
+
+	annotation PBI_IsFromSource = FS
+
+relationship 'dw dim_analista_id_pais_dw dim_pais_id_pais'
+	fromColumn: 'dw dim_analista'.id_pais
+	toColumn: 'dw dim_pais'.id_pais
+
+relationship 'dw fato_chamados_prioridade_Ordem Prioridade_Prioridade'
+	fromColumn: 'dw fato_chamados'.prioridade
+	toColumn: 'Ordem Prioridade'.Prioridade
+

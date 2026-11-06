@@ -1,0 +1,60 @@
+table 'dw dim_analista'
+	lineageTag: 1f1baf6e-4be9-4e64-a996-58c2f291ed35
+
+	column id_analista
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: eb970671-1dc0-48be-a4a1-a983209a62d7
+		summarizeBy: none
+		sourceColumn: id_analista
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(150)
+		lineageTag: 01a672f8-35a9-4274-aa95-310f058a5e52
+		summarizeBy: none
+		sourceColumn: nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column nivel
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(50)
+		lineageTag: b531571f-00dc-4ec2-ba0c-0aeb3339d189
+		summarizeBy: none
+		sourceColumn: nivel
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_pais
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: ec962175-85eb-4ea8-b03c-c0b1c1cf4b7d
+		summarizeBy: none
+		sourceColumn: id_pais
+
+		annotation SummarizationSetBy = Automatic
+
+	/// Rótulo único (nome + id) para gráficos nativos; evita juntar homônimos.
+	column 'Analista Rotulo' = 'dw dim_analista'[nome] & " #" & 'dw dim_analista'[id_analista]
+		dataType: string
+		displayFolder: Nativo
+		lineageTag: 682a9e55-91e3-43fe-b8f1-b25e351337cf
+
+	partition 'dw dim_analista' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("pc-lucas\sqldev", "db_suporte_bi"),
+				    dw_dim_analista = Value.NativeQuery(Fonte, "SELECT id_analista, nome, nivel, id_pais FROM dw.dim_analista", null, [EnableFolding = true])
+				in
+				    dw_dim_analista
+

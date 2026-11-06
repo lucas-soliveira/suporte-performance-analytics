@@ -1,0 +1,53 @@
+table 'dw dim_cliente'
+	lineageTag: 101210af-aea0-441f-9c3f-ed3b6e7294ca
+
+	column id_cliente
+		dataType: int64
+		isNullable: false
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 73fab637-8317-4baa-91a0-aeaceb039bb4
+		summarizeBy: none
+		sourceColumn: id_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column nome_cliente
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(150)
+		lineageTag: cddfb4dc-705a-408c-bd1e-546a5bff4790
+		summarizeBy: none
+		sourceColumn: nome_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column pais_cliente
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(100)
+		lineageTag: 38b61b7e-2ae3-445d-b23d-b169e4eb69e0
+		summarizeBy: none
+		sourceColumn: pais_cliente
+
+		annotation SummarizationSetBy = Automatic
+
+	column setor
+		dataType: string
+		isNullable: false
+		sourceProviderType: varchar(100)
+		lineageTag: ca5ca1e5-33ef-43b3-9223-1721455c9825
+		summarizeBy: none
+		sourceColumn: setor
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'dw dim_cliente' = m
+		mode: import
+		source =
+				let
+				    Fonte = Sql.Database("pc-lucas\sqldev", "db_suporte_bi"),
+				    dw_dim_cliente = Fonte{[Schema="dw",Item="dim_cliente"]}[Data]
+				in
+				    dw_dim_cliente
+

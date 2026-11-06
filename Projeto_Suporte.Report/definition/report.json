@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/3.3.0/schema.json",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "Fluent2-CY26SU08",
+      "reportVersionAtImport": {
+        "visual": "2.12.0",
+        "report": "3.4.0",
+        "page": "2.3.1"
+      },
+      "type": "SharedResources"
+    }
+  },
+  "objects": {
+    "section": [
+      {
+        "properties": {
+          "verticalAlignment": {
+            "expr": {
+              "Literal": {
+                "Value": "'Top'"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "outspacePane": [
+      {
+        "properties": {
+          "expanded": {
+            "expr": {
+              "Literal": {
+                "Value": "false"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "publicCustomVisuals": [
+    "deneb7E15AEF80B9E4D4F8E12924291ECE89A",
+    "smartFilterBarSDKA9F7BD62E04ADCE9DD7450D052A5DB60",
+    "htmlContent443BE3AD55E043BF878BED274D3A6855",
+    "Exportfile40F9J395H1047D67DH73H25C4E835F00"
+  ],
+  "resourcePackages": [
+    {
+      "name": "SharedResources",
+      "type": "SharedResources",
+      "items": [
+        {
+          "name": "Fluent2-CY26SU08",
+          "path": "BaseThemes/Fluent2-CY26SU08.json",
+          "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "logo_claro_sem_fundo7087985120911754.png",
+          "path": "logo_claro_sem_fundo7087985120911754.png",
+          "type": "Image"
+        },
+        {
+          "name": "P_gina_1_-_Suporte8420476673835007.png",
+          "path": "P_gina_1_-_Suporte8420476673835007.png",
+          "type": "Image"
+        },
+        {
+          "name": "P_gina_2_-_Suporte7913909207446717.png",
+          "path": "P_gina_2_-_Suporte7913909207446717.png",
+          "type": "Image"
+        },
+        {
+          "name": "P_gina_3_-_Suporte17557517455123017.png",
+          "path": "P_gina_3_-_Suporte17557517455123017.png",
+          "type": "Image"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "allowChangeFilterTypes": true,
+    "useEnhancedTooltips": true,
+    "useDefaultAggregateDisplayName": true
+  }
+}

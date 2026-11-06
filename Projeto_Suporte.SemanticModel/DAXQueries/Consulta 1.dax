@@ -1,0 +1,7 @@
+// Bem-vindo ao modo de exibição de consulta DAX! Saiba mais sobre consultas DAX em https://aka.ms/dax-queries.
+// Clique com o botão direito do mouse em tabelas, colunas ou medidas no painel de dados para acessar consultas rápidas ou peça ajuda ao Copilot para escrever DAX.
+
+// Selecione "Executar" para experimentar esta consulta DAX de exemplo.
+EVALUATE
+    TOPN(100, 'dw dim_analista')
+EVALUATE INFO.MEASURES()

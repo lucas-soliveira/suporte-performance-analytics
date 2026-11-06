@@ -1,0 +1,18 @@
+# Power BI: cache local e configurações da máquina
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs da carga diária
+logs/
+
+# Arquivos grandes ou obsoletos
+fato_chamados*.csv
+*.zip
+_backup_*/
+*.ktr
+baixar_runtime_power_automate.bat
+Claude outputs/

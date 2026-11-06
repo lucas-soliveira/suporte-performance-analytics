@@ -1,0 +1,19 @@
+table 'Filtro Rapido de Data'
+	lineageTag: 8b0803d4-50df-438d-bfd3-4e6c376a2c9b
+
+	/// Botao Hoje: ao escolher Hoje, todas as medidas passam a considerar apenas a data atual.
+	calculationGroup
+		precedence: 10
+
+		/// Sem filtro extra: as medidas funcionam como sempre.
+		calculationItem Todos = SELECTEDMEASURE ()
+
+		/// Filtra todas as medidas para a data de hoje (TODAY).
+		calculationItem Hoje = CALCULATE ( SELECTEDMEASURE (), 'dw dim_calendario'[data] = TODAY () )
+
+	column 'Filtro Rapido de Data'
+		dataType: string
+		lineageTag: 0d63a764-67ed-4a87-9bec-516a6d51ac30
+
+	partition 'Partition_Filtro Rapido de Data' = calculationGroup
+
