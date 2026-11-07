@@ -1660,6 +1660,104 @@ table _Medidas
 		displayFolder: Nativo
 		lineageTag: 6d5a7903-f537-41d4-a798-7c73dfce1042
 
+	/// Mapa de calor HTML: % de chamados que violaram a meta de resposta e de resolução, por prioridade. Resolução considera só chamados com SLA de resolução apurado (fechados). Respeita filtros e RLS.
+	measure 'HTML Oper Mapa Violacoes' =
+			VAR _t =
+			    FILTER (
+			        ADDCOLUMNS (
+			            VALUES ( 'Ordem Prioridade'[Prioridade] ),
+			            "@o", CALCULATE ( MAX ( 'Ordem Prioridade'[Ordem] ) ),
+			            "@vr", [Violações SLA Resposta],
+			            "@br", [Total Chamados],
+			            "@vs", [Violações SLA Resolução],
+			            "@bs", CALCULATE ( [Total Chamados], NOT ISBLANK ( 'dw fato_chamados'[sla_resolucao_ok] ) )
+			        ),
+			        NOT ISBLANK ( [@br] )
+			    )
+			VAR _n = COUNTROWS ( _t )
+			VAR _hdr = CONCATENATEX ( _t, "<div class='h'>" & [Prioridade] & "</div>", "", [@o], ASC )
+			VAR _resp =
+			    CONCATENATEX (
+			        _t,
+			        VAR _p = DIVIDE ( [@vr], [@br] )
+			        VAR _bg = SWITCH ( TRUE (), _p >= 0.8, "#8E1B2A", _p >= 0.6, "#C8102E", _p >= 0.4, "#F08A97", _p >= 0.2, "#F6B9C1", "#FBEFF1" )
+			        VAR _fc = IF ( _p >= 0.6, "#FFFFFF", "#2B1518" )
+			        RETURN "<div class='c' style='background:" & _bg & ";color:" & _fc & "'><div class='p'>" & FORMAT ( COALESCE ( _p, 0 ), "0%", "pt-BR" ) & "</div><div class='n'>" & FORMAT ( COALESCE ( [@vr], 0 ), "#,0", "pt-BR" ) & " chamados</div></div>",
+			        "", [@o], ASC
+			    )
+			VAR _res =
+			    CONCATENATEX (
+			        _t,
+			        VAR _p = DIVIDE ( [@vs], [@bs] )
+			        VAR _bg = SWITCH ( TRUE (), _p >= 0.8, "#8E1B2A", _p >= 0.6, "#C8102E", _p >= 0.4, "#F08A97", _p >= 0.2, "#F6B9C1", "#FBEFF1" )
+			        VAR _fc = IF ( _p >= 0.6, "#FFFFFF", "#2B1518" )
+			        RETURN "<div class='c' style='background:" & _bg & ";color:" & _fc & "'><div class='p'>" & FORMAT ( COALESCE ( _p, 0 ), "0%", "pt-BR" ) & "</div><div class='n'>" & FORMAT ( COALESCE ( [@vs], 0 ), "#,0", "pt-BR" ) & " chamados</div></div>",
+			        "", [@o], ASC
+			    )
+			VAR _css =
+			    "<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+			    .w{position:fixed;inset:0;display:grid;grid-template-columns:96px repeat(" & _n & ",1fr);grid-template-rows:20px 1fr 1fr;gap:6px;padding:2px 10px 6px 4px;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+			    .h{display:flex;align-items:center;justify-content:center;color:#7D6669;font-size:11px;font-weight:600;letter-spacing:.02em;}
+			    .rl{display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:#2B1518;font-size:12px;font-weight:600;}
+			    .c{border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+			    .p{font-size:20px;font-weight:700;line-height:1.1;}
+			    .n{font-size:10.5px;opacity:.85;}</style>"
+			RETURN
+			    IF (
+			        _n = 0,
+			        BLANK (),
+			        _css & "<div class='w'><div></div>" & _hdr & "<div class='rl'>Resposta</div>" & _resp & "<div class='rl'>Resolução</div>" & _res & "</div>"
+			    )
+		displayFolder: Página 3 - Operacional\HTML
+		lineageTag: aa78efe9-be75-40bc-b43f-bd7b089d2c72
+
+	/// Gráfico de bala HTML: tempo médio de resposta (barra) contra a meta de cada prioridade (traço). Vermelho = acima da meta. Respeita filtros e RLS.
+	measure 'HTML Oper Bullet Resposta' =
+			VAR _t =
+			    FILTER (
+			        ADDCOLUMNS (
+			            VALUES ( 'Ordem Prioridade'[Prioridade] ),
+			            "@o", CALCULATE ( MAX ( 'Ordem Prioridade'[Ordem] ) ),
+			            "@r", [Oper Resposta Media],
+			            "@m", [Oper Meta Resposta (h)]
+			        ),
+			        NOT ISBLANK ( [@r] )
+			    )
+			VAR _mx = MAX ( 10, MAXX ( _t, MAX ( [@r], [@m] ) ) * 1.1 )
+			VAR _linhas =
+			    CONCATENATEX (
+			        _t,
+			        VAR _r = [@r]
+			        VAR _m = [@m]
+			        VAR _acima = _r > _m
+			        VAR _cb = IF ( _acima, "#C8102E", "#F08A97" )
+			        VAR _txt = FORMAT ( _r, "0.0", "pt-BR" ) & " h · " & IF ( _acima, FORMAT ( DIVIDE ( _r, _m ), "0.0", "pt-BR" ) & "x a meta", "dentro da meta" )
+			        RETURN
+			            "<div class='r'><div class='l'>" & [Prioridade] & "</div><div class='tr'><div class='bg'></div>"
+			                & "<div class='b' style='width:" & FORMAT ( DIVIDE ( _r, _mx ) * 100, "0.0", "en-US" ) & "%;background:" & _cb & "'></div>"
+			                & "<div class='m' style='left:" & FORMAT ( DIVIDE ( _m, _mx ) * 100, "0.0", "en-US" ) & "%' title='Meta: " & _m & " h'></div></div>"
+			                & "<div class='v' style='color:" & IF ( _acima, "#C8102E", "#7D6669" ) & "'>" & _txt & "</div></div>",
+			        "", [@o], ASC
+			    )
+			VAR _leg =
+			    "<div class='lg'><span><i style='background:#C8102E'></i>Real acima da meta</span><span><i style='background:#F08A97'></i>Real dentro da meta</span><span><i class='t'></i>Meta</span></div>"
+			VAR _css =
+			    "<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+			    .w{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-around;padding:0 10px 2px 4px;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;}
+			    .r{display:flex;align-items:center;gap:12px;}
+			    .l{flex:0 0 64px;text-align:right;color:#7D6669;font-size:11px;font-weight:600;}
+			    .tr{flex:1;position:relative;height:20px;}
+			    .bg{position:absolute;inset:0;background:#FBF3F4;border-radius:4px;}
+			    .b{position:absolute;left:0;top:5px;height:10px;border-radius:0 4px 4px 0;}
+			    .m{position:absolute;top:0;width:3px;height:20px;background:#2B1518;border-radius:1px;transform:translateX(-1px);}
+			    .v{flex:0 0 150px;font-size:12px;font-weight:700;white-space:nowrap;}
+			    .lg{display:flex;gap:16px;justify-content:flex-end;color:#7D6669;font-size:10px;padding-right:4px;}
+			    .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+			    .lg i.t{width:3px;background:#2B1518;}</style>"
+			RETURN IF ( ISBLANK ( MAXX ( _t, [@r] ) ), BLANK (), _css & "<div class='w'>" & _linhas & _leg & "</div>" )
+		displayFolder: Página 3 - Operacional\HTML
+		lineageTag: 8bb692e7-88a6-447b-b636-0c9fc24eeb0f
+
 	column 'Coluna 1'
 		dataType: string
 		isHidden

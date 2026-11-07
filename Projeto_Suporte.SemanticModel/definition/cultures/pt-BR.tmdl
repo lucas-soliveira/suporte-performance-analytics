@@ -295,19 +295,7 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "Oper Resposta Media"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Resposta média (h)": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_medidas.oper_meta_resposta_h": {
 			      "Definition": {
@@ -316,19 +304,7 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "Oper Meta Resposta (h)"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Meta (h)": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_medidas.oper_backlog_top_5_clientes": {
 			      "Definition": {
@@ -376,19 +352,7 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "Violações SLA Resposta"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Resposta": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "table_medidas.violações_sla_resolução": {
 			      "Definition": {
@@ -397,19 +361,7 @@ cultureInfo pt-BR
 			          "ConceptualProperty": "Violações SLA Resolução"
 			        }
 			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Resolução": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
+			      "State": "Generated"
 			    },
 			    "dw_fato_chamados.status": {
 			      "Definition": {
