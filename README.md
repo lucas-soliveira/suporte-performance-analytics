@@ -2,6 +2,12 @@
 
 ![Capa do Projeto](IMG_Suporte_Claro/pg1_suporte_operacional.png)
 
+<p align="center">
+  <a href="https://app.powerbi.com/view?r=eyJrIjoiZjMxZTJhOGMtYTk0Yy00MGI0LWJlY2EtNzczNmUxMzYwZTZjIiwidCI6ImIxZjQxMDEzLWU0NDUtNGIzNS1hNzA4LTA2YTk5ZTZjZWQ2ZSJ9"><img src="https://img.shields.io/badge/Ver%20no%20Power%20BI%20Service-F2C811?style=for-the-badge&logo=powerbi&logoColor=black" alt="Ver no Power BI Service"></a>
+</p>
+
+> 🔓 **Relatório interativo aberto**, sem login: clique no botão acima. Todos os dados são fictícios. Nesta versão pública a segurança por país (RLS) foi removida, então todos os 6 países aparecem.
+
 ## 📌 Sobre o Projeto
 
 Projeto de portfólio que analisa a operação de **suporte técnico de uma empresa multinacional fictícia**, com atendimento em **6 países** (Brasil, Chile, Peru, México, Colômbia e Espanha). A base cobre de **janeiro de 2024 até hoje**, com **mais de 280 mil chamados**, **60 analistas** e **300 empresas clientes**, e recebe chamados novos todos os dias por uma carga automática.
